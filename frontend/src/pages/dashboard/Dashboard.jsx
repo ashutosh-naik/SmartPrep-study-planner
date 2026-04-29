@@ -21,6 +21,7 @@ import {
   Play,
   Calendar as CalIcon,
   X,
+  Zap,
 } from "lucide-react";
 
 
@@ -167,9 +168,10 @@ const Dashboard = () => {
         const customTasks = await taskService.getCustomTasks("today");
         const customList = customTasks.data || [];
 
+        const localTodayTasks = localPlan[todayKey] || [];
         setData({
           ...res.data,
-          todaysTasks: [...(localTodayTasks.length > 0 ? localTodayTasks : res.data.todaysTasks), ...customList]
+          todaysTasks: [...(localTodayTasks.length > 0 ? localTodayTasks : (res.data?.todaysTasks || [])), ...customList]
         });
       } catch (err) {
         const localPlan = JSON.parse(localStorage.getItem("sp_study_plan") || "{}");

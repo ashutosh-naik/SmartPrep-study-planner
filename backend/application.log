@@ -1,0 +1,446 @@
+2026-04-29T14:07:45.256+05:30  INFO 21136 --- [restartedMain] com.smartprep.SmartPrepApplication       : Starting SmartPrepApplication using Java 21.0.10 with PID 21136 (C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\target\classes started by naika in C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend)
+2026-04-29T14:07:45.258+05:30 DEBUG 21136 --- [restartedMain] com.smartprep.SmartPrepApplication       : Running with Spring Boot v3.4.4, Spring v6.2.5
+2026-04-29T14:07:45.259+05:30  INFO 21136 --- [restartedMain] com.smartprep.SmartPrepApplication       : No active profile set, falling back to 1 default profile: "default"
+2026-04-29T14:07:45.344+05:30  INFO 21136 --- [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-04-29T14:07:45.345+05:30  INFO 21136 --- [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-04-29T14:07:46.194+05:30  INFO 21136 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-04-29T14:07:46.195+05:30  INFO 21136 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-29T14:07:46.397+05:30  INFO 21136 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 193 ms. Found 11 JPA repository interfaces.
+2026-04-29T14:07:46.417+05:30  INFO 21136 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-04-29T14:07:46.419+05:30  INFO 21136 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-04-29T14:07:46.440+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.CustomTaskRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.441+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.FlashcardResultRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.441+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.QuestionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.443+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.ResultRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.443+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.StudyPlanRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.443+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.SubjectRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.443+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.TaskRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.444+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.TestRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.444+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.TimetableRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.445+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.TopicRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.445+05:30  INFO 21136 --- [restartedMain] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartprep.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-04-29T14:07:46.445+05:30  INFO 21136 --- [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 13 ms. Found 0 Redis repository interfaces.
+2026-04-29T14:07:47.171+05:30  INFO 21136 --- [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8081 (http)
+2026-04-29T14:07:47.197+05:30  INFO 21136 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-29T14:07:47.199+05:30  INFO 21136 --- [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.39]
+2026-04-29T14:07:47.264+05:30  INFO 21136 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-29T14:07:47.264+05:30  INFO 21136 --- [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1919 ms
+2026-04-29T14:07:47.395+05:30  INFO 21136 --- [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-29T14:07:47.459+05:30  INFO 21136 --- [restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.11.Final
+2026-04-29T14:07:47.498+05:30  INFO 21136 --- [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-29T14:07:47.765+05:30  INFO 21136 --- [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-29T14:07:47.803+05:30  INFO 21136 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-29T14:07:48.021+05:30  INFO 21136 --- [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@63571b61
+2026-04-29T14:07:48.022+05:30  INFO 21136 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-29T14:07:48.121+05:30  INFO 21136 --- [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 17.9
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-04-29T14:07:49.156+05:30  INFO 21136 --- [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-29T14:07:50.039+05:30  INFO 21136 --- [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-29T14:07:50.367+05:30 DEBUG 21136 --- [restartedMain] com.smartprep.security.JwtFilter         : Filter 'jwtFilter' configured for use
+2026-04-29T14:07:50.411+05:30  INFO 21136 --- [restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-29T14:07:51.014+05:30  INFO 21136 --- [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-04-29T14:07:51.478+05:30 DEBUG 21136 --- [restartedMain] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, JwtFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2026-04-29T14:07:52.071+05:30  INFO 21136 --- [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2026-04-29T14:07:52.106+05:30  INFO 21136 --- [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8081 (http) with context path '/'
+2026-04-29T14:07:52.114+05:30  INFO 21136 --- [restartedMain] com.smartprep.SmartPrepApplication       : Started SmartPrepApplication in 7.341 seconds (process running for 7.831)
+2026-04-29T14:13:04.533+05:30  INFO 21136 --- [tomcat-handler-0] o.apache.tomcat.util.http.parser.Cookie  : A cookie header was received [g_state={"i_l":0,"i_ll":1777452085084,"i_e":{"enable_itp_optimization":0},"i_b":"EHt+S4uh+OKKMkPbEAagzCCNrLjDIVYAKL7O3HSp4vc","i_et":1776125844595}] that contained an invalid cookie. That cookie will be ignored.
+ Note: further occurrences of this error will be logged at DEBUG level.
+2026-04-29T14:13:04.546+05:30  INFO 21136 --- [tomcat-handler-0] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-29T14:13:04.547+05:30  INFO 21136 --- [tomcat-handler-0] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-29T14:13:04.558+05:30  INFO 21136 --- [tomcat-handler-0] o.s.web.servlet.DispatcherServlet        : Completed initialization in 10 ms
+2026-04-29T14:13:04.599+05:30 DEBUG 21136 --- [tomcat-handler-0] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/login
+2026-04-29T14:13:04.655+05:30 DEBUG 21136 --- [tomcat-handler-0] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-04-29T14:13:04.657+05:30 DEBUG 21136 --- [tomcat-handler-0] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/login
+2026-04-29T14:13:05.175+05:30 DEBUG 21136 --- [tomcat-handler-0] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:05.541+05:30 DEBUG 21136 --- [tomcat-handler-0] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+2026-04-29T14:13:05.545+05:30 DEBUG 21136 --- [tomcat-handler-0] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:05.759+05:30 DEBUG 21136 --- [tomcat-handler-1] o.s.security.web.FilterChainProxy        : Securing GET /api/analytics/dashboard
+2026-04-29T14:13:05.828+05:30 DEBUG 21136 --- [tomcat-handler-1] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:05.835+05:30 DEBUG 21136 --- [tomcat-handler-1] o.s.security.web.FilterChainProxy        : Secured GET /api/analytics/dashboard
+2026-04-29T14:13:05.850+05:30 DEBUG 21136 --- [tomcat-handler-1] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:05.890+05:30 DEBUG 21136 --- [tomcat-handler-1] org.hibernate.SQL                        : 
+    select
+        sp1_0.id,
+        sp1_0.created_at,
+        sp1_0.status,
+        sp1_0.title,
+        sp1_0.user_id 
+    from
+        study_plans sp1_0 
+    left join
+        users u1_0 
+            on u1_0.id=sp1_0.user_id 
+    where
+        u1_0.id=? 
+    order by
+        sp1_0.created_at desc 
+    fetch
+        first ? rows only
+2026-04-29T14:13:05.909+05:30 DEBUG 21136 --- [tomcat-handler-1] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_at,
+        r1_0.score,
+        r1_0.test_id,
+        r1_0.user_id 
+    from
+        results r1_0 
+    left join
+        users u1_0 
+            on u1_0.id=r1_0.user_id 
+    where
+        u1_0.id=?
+2026-04-29T14:13:06.064+05:30 DEBUG 21136 --- [tomcat-handler-2] o.s.security.web.FilterChainProxy        : Securing GET /api/pomodoro
+2026-04-29T14:13:06.069+05:30 DEBUG 21136 --- [tomcat-handler-2] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:06.074+05:30 DEBUG 21136 --- [tomcat-handler-2] o.s.security.web.FilterChainProxy        : Secured GET /api/pomodoro
+2026-04-29T14:13:06.081+05:30 DEBUG 21136 --- [tomcat-handler-3] o.s.security.web.FilterChainProxy        : Securing GET /api/analytics/dashboard
+2026-04-29T14:13:06.090+05:30 DEBUG 21136 --- [tomcat-handler-3] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:06.092+05:30  WARN 21136 --- [tomcat-handler-2] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource api/pomodoro.]
+2026-04-29T14:13:06.099+05:30 DEBUG 21136 --- [tomcat-handler-3] o.s.security.web.FilterChainProxy        : Secured GET /api/analytics/dashboard
+2026-04-29T14:13:06.104+05:30 DEBUG 21136 --- [tomcat-handler-3] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:06.113+05:30 DEBUG 21136 --- [tomcat-handler-3] org.hibernate.SQL                        : 
+    select
+        sp1_0.id,
+        sp1_0.created_at,
+        sp1_0.status,
+        sp1_0.title,
+        sp1_0.user_id 
+    from
+        study_plans sp1_0 
+    left join
+        users u1_0 
+            on u1_0.id=sp1_0.user_id 
+    where
+        u1_0.id=? 
+    order by
+        sp1_0.created_at desc 
+    fetch
+        first ? rows only
+2026-04-29T14:13:06.117+05:30 DEBUG 21136 --- [tomcat-handler-3] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_at,
+        r1_0.score,
+        r1_0.test_id,
+        r1_0.user_id 
+    from
+        results r1_0 
+    left join
+        users u1_0 
+            on u1_0.id=r1_0.user_id 
+    where
+        u1_0.id=?
+2026-04-29T14:13:06.248+05:30 DEBUG 21136 --- [tomcat-handler-4] o.s.security.web.FilterChainProxy        : Securing GET /api/tasks/custom?filter=today
+2026-04-29T14:13:06.249+05:30 DEBUG 21136 --- [tomcat-handler-5] o.s.security.web.FilterChainProxy        : Securing GET /api/pomodoro
+2026-04-29T14:13:06.251+05:30 DEBUG 21136 --- [tomcat-handler-5] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:06.251+05:30 DEBUG 21136 --- [tomcat-handler-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:06.255+05:30 DEBUG 21136 --- [tomcat-handler-5] o.s.security.web.FilterChainProxy        : Secured GET /api/pomodoro
+2026-04-29T14:13:06.259+05:30  WARN 21136 --- [tomcat-handler-5] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource api/pomodoro.]
+2026-04-29T14:13:06.265+05:30 DEBUG 21136 --- [tomcat-handler-4] o.s.security.web.FilterChainProxy        : Secured GET /api/tasks/custom?filter=today
+2026-04-29T14:13:06.280+05:30 DEBUG 21136 --- [tomcat-handler-4] org.hibernate.SQL                        : 
+    select
+        ct1_0.id,
+        ct1_0.created_at,
+        ct1_0.deadline,
+        ct1_0.duration_hours,
+        ct1_0.notes,
+        ct1_0.priority,
+        ct1_0.scheduled_date,
+        ct1_0.status,
+        ct1_0.subject_name,
+        ct1_0.title,
+        ct1_0.user_id 
+    from
+        custom_tasks ct1_0 
+    left join
+        users u1_0 
+            on u1_0.id=ct1_0.user_id 
+    where
+        u1_0.email=? 
+    order by
+        ct1_0.created_at desc
+2026-04-29T14:13:06.407+05:30 DEBUG 21136 --- [tomcat-handler-6] o.s.security.web.FilterChainProxy        : Securing GET /api/tasks/custom?filter=today
+2026-04-29T14:13:06.410+05:30 DEBUG 21136 --- [tomcat-handler-6] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:06.413+05:30 DEBUG 21136 --- [tomcat-handler-6] o.s.security.web.FilterChainProxy        : Secured GET /api/tasks/custom?filter=today
+2026-04-29T14:13:06.417+05:30 DEBUG 21136 --- [tomcat-handler-6] org.hibernate.SQL                        : 
+    select
+        ct1_0.id,
+        ct1_0.created_at,
+        ct1_0.deadline,
+        ct1_0.duration_hours,
+        ct1_0.notes,
+        ct1_0.priority,
+        ct1_0.scheduled_date,
+        ct1_0.status,
+        ct1_0.subject_name,
+        ct1_0.title,
+        ct1_0.user_id 
+    from
+        custom_tasks ct1_0 
+    left join
+        users u1_0 
+            on u1_0.id=ct1_0.user_id 
+    where
+        u1_0.email=? 
+    order by
+        ct1_0.created_at desc
+2026-04-29T14:13:06.627+05:30 DEBUG 21136 --- [tomcat-handler-7] o.s.security.web.FilterChainProxy        : Securing GET /api/tasks/custom?filter=today
+2026-04-29T14:13:06.629+05:30 DEBUG 21136 --- [tomcat-handler-7] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:06.633+05:30 DEBUG 21136 --- [tomcat-handler-7] o.s.security.web.FilterChainProxy        : Secured GET /api/tasks/custom?filter=today
+2026-04-29T14:13:06.636+05:30 DEBUG 21136 --- [tomcat-handler-7] org.hibernate.SQL                        : 
+    select
+        ct1_0.id,
+        ct1_0.created_at,
+        ct1_0.deadline,
+        ct1_0.duration_hours,
+        ct1_0.notes,
+        ct1_0.priority,
+        ct1_0.scheduled_date,
+        ct1_0.status,
+        ct1_0.subject_name,
+        ct1_0.title,
+        ct1_0.user_id 
+    from
+        custom_tasks ct1_0 
+    left join
+        users u1_0 
+            on u1_0.id=ct1_0.user_id 
+    where
+        u1_0.email=? 
+    order by
+        ct1_0.created_at desc
+2026-04-29T14:13:06.741+05:30 DEBUG 21136 --- [tomcat-handler-8] o.s.security.web.FilterChainProxy        : Securing GET /api/tasks/custom?filter=today
+2026-04-29T14:13:06.748+05:30 DEBUG 21136 --- [tomcat-handler-8] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.break_duration,
+        u1_0.course,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.exam_date,
+        u1_0.exam_type,
+        u1_0.name,
+        u1_0.password_hash,
+        u1_0.preferred_study_time,
+        u1_0.study_hours_per_day,
+        u1_0.year 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-04-29T14:13:06.760+05:30 DEBUG 21136 --- [tomcat-handler-8] o.s.security.web.FilterChainProxy        : Secured GET /api/tasks/custom?filter=today
+2026-04-29T14:13:06.765+05:30 DEBUG 21136 --- [tomcat-handler-8] org.hibernate.SQL                        : 
+    select
+        ct1_0.id,
+        ct1_0.created_at,
+        ct1_0.deadline,
+        ct1_0.duration_hours,
+        ct1_0.notes,
+        ct1_0.priority,
+        ct1_0.scheduled_date,
+        ct1_0.status,
+        ct1_0.subject_name,
+        ct1_0.title,
+        ct1_0.user_id 
+    from
+        custom_tasks ct1_0 
+    left join
+        users u1_0 
+            on u1_0.id=ct1_0.user_id 
+    where
+        u1_0.email=? 
+    order by
+        ct1_0.created_at desc
