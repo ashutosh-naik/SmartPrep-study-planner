@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== SmartPrep Minimal SaaS Theme Tokens ===== */
+:root {
+  color-scheme: light;
+
+  /* App Background: #F7F7F5 */
+  --color-background: 247 247 245;
+  /* Card Background: #FFFFFF */
+  --color-surface: 255 255 255;
+  --color-surface-muted: 241 241 241;
+  /* Borders: #E6E6E6 */
+  --color-border: 230 230 230;
+  /* Primary Text: #4A3728 (Dark Brown) */
+  --color-text-primary: 74 55 40;
+  /* Secondary Text: #6B6B6B */
+  --color-text-muted: 107 107 107;
+  
+  --color-sidebar: 255 255 255;
+
+  /* Accent: Black (#111111) */
+  --color-primary-50: 241 241 241;
+  --color-primary-100: 230 230 230;
+  --color-primary-200: 200 200 200;
+  --color-primary-500: 74 55 40;
+  --color-primary-600: 0 0 0;
+  --color-primary-700: 0 0 0;
+
+  --color-success: 77 124 15; /* Sage Green */
+  --color-warning: 180 83 9;  /* Muted Amber */
+  --color-danger: 153 27 27;   /* Deep Red */
+  --color-info: 3 105 161;     /* Slate Blue */
+
+  --color-white: 255 255 255;
+  --color-black: 74 55 40;
+
+  --primary: #4A3728; /* Deep Brown */
+  --primary-light: #6D5442;
+  --primary-dark: #2D2218;
+  --accent-gold: #D4AF37;
+  --accent-emerald: #059669;
+  --accent-rose: #BE123C;
+  --bg-main: #F7F7F5;
+  --text-main: #1A1A1A;
+  --border-light: #E6E6E6;
+  --radius-premium: 12px;
+
+  --chart-grid: #E6E6E6;
+  --chart-axis: #6B6B6B;
+  --chart-primary: #4A3728;
+  --chart-track: #F1F1F1;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-background: 10 10 10;
+  --color-surface: 18 18 18;
+  --color-surface-muted: 30 30 30;
+  --color-border: 40 40 40;
+  --color-text-primary: 245 245 245;
+  --color-text-muted: 160 160 160;
+  --color-sidebar: 10 10 10;
+
+  --color-primary-50: 30 30 30;
+  --color-primary-100: 40 40 40;
+  --color-primary-200: 60 60 60;
+  --color-primary-500: 245 245 245;
+  --color-primary-600: 255 255 255;
+  --color-primary-700: 255 255 255;
+}
+
+/* ===== Global Base ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background-color: rgb(var(--color-background) / 1);
+  color: rgb(var(--color-text-primary) / 1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ===== Custom Utilities ===== */
+@layer components {
+  .card {
+    @apply bg-surface rounded-[12px] border transition-all duration-200 p-6;
+    border-color: rgb(var(--color-border) / 1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+
+  .btn-primary {
+    @apply bg-[#4A3728] text-white px-5 py-2.5 rounded-[8px] font-semibold
+           hover:bg-[#3D2B1F] active:scale-[0.98]
+           transition-all duration-300 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-[#4A3728] focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-[#4A3728] border border-[#E6E6E6] px-5 py-2.5 rounded-[8px] font-semibold
+           hover:bg-gray-50 transition-all duration-300 active:scale-[0.98];
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2.5 rounded-[8px] border border-[#E6E6E6]
+           focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400
+           transition-all duration-200 text-text-primary
+           placeholder:text-text-muted bg-white;
+  }
+
+  .badge-neutral {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F1F1F1] text-[#6B6B6B] uppercase tracking-wider transition-colors hover:bg-gray-200;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-green-50 text-[#4D7C0F] border border-green-100 uppercase tracking-wider;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-[#B45309] border border-amber-100 uppercase tracking-wider;
+  }
+
+  .badge-info {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-[#0369A1] border border-blue-100 uppercase tracking-wider;
+  }
+
+  .progress-bar-container {
+    @apply w-full h-[6px] bg-[#E6E6E6] rounded-full overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply h-full bg-[#4A3728] rounded-full transition-all duration-700;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-[8px] text-[#6B6B6B]
+           hover:bg-[#F1F1F1] hover:text-[#4A3728] transition-all duration-300 text-[14px] font-medium;
+  }
+
+  .sidebar-link.active {
+    @apply bg-[#F1F1F1] text-[#4A3728];
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E6E6E6;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D1D1D1;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
