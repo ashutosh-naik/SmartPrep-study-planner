@@ -1,130 +1,135 @@
 <div align="center">
-  <img src="./frontend/public/favicon.ico" alt="SmartPrep Logo" width="80" height="80">
+  <img src="./frontend/public/favicon.ico" alt="SmartPrep Logo" width="100" height="100">
   
-  # SmartPrep
-  **Comprehensive Adaptive Study Planner and Exam Analytics Platform**
-  
-  [![Frontend](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-blue.svg)](https://reactjs.org/)
-  [![Backend](https://img.shields.io/badge/Backend-Spring%20Boot%203-brightgreen.svg)](https://spring.io/projects/spring-boot)
-  [![Database](https://img.shields.io/badge/Database-PostgreSQL-blue.svg)](https://www.postgresql.org/)
-  [![Styling](https://img.shields.io/badge/Styling-Tailwind%20CSS-38B2AC.svg)](https://tailwindcss.com/)
-  
-  <p>
-    SmartPrep is an AI-powered adaptive exam preparation platform designed to help students study smarter, track their progress with real analytics, manage backlogs effortlessly, and walk into their exams fully prepared and confident.
+  # 🚀 SmartPrep
+  **The Ultimate Adaptive Study Planner & Exam Analytics Platform**
+
+  [![Java](https://img.shields.io/badge/Java-21-orange.svg?style=flat-square&logo=openjdk)](https://openjdk.org/)
+  [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.4-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
+  [![React](https://img.shields.io/badge/React-18.3-blue.svg?style=flat-square&logo=react)](https://react.dev/)
+  [![Vite](https://img.shields.io/badge/Vite-6.0-646CFF.svg?style=flat-square&logo=vite)](https://vitejs.dev/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC.svg?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
+  [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
+
+  <p align="center">
+    <b>Empowering students to achieve academic excellence through AI-driven planning and deep performance insights.</b>
+    <br />
+    <a href="#-key-features">Features</a> •
+    <a href="#-tech-stack">Tech Stack</a> •
+    <a href="#-getting-started">Installation</a> •
+    <a href="#-deployment">Deployment</a>
   </p>
 </div>
 
 ---
 
+## 🌟 Overview
+
+SmartPrep is a high-performance, AI-integrated study ecosystem designed to transform how students prepare for exams. By combining **Adaptive Scheduling** with **Real-time Analytics**, SmartPrep doesn't just tell you *what* to study; it dynamically optimizes your path to mastery.
+
 ## ✨ Key Features
 
-- 🧠 **AI-Adaptive Planning**: Automatically builds a personalized daily study schedule based on your syllabus, exam date, and preferred study hours.
-- 📈 **Deep Analytics**: Track score trends, subject mastery, and overall exam readiness with beautiful, real-time charts.
-- 📝 **Mock Test Engine**: Take interactive, timed subject-wise mock tests and review detailed result breakdowns.
-- 🔄 **Smart Backlog Recovery**: Missed a session? SmartPrep intelligently redistributes skipped topics across your remaining schedule.
-- ⏳ **Exam Countdown & Alerts**: Stay on track with smart reminders and a live countdown to your exam day.
-- 🏆 **Streaks & Achievements**: Build consistent study habits with daily streaks, gamified progress milestones, and leaderboards.
+- 🧠 **Adaptive Study Engine**: Dynamically generates schedules based on your syllabus weightage, exam dates, and daily bandwidth.
+- 📉 **Precision Analytics**: Visualize your readiness with interactive heatmaps, trend lines, and subject mastery radars.
+- ⚡ **Virtual Threads (Project Loom)**: Backend optimized for high concurrency using Java 21 virtual threads.
+- 🔄 **Intelligent Backlog Management**: Missed a session? The system automatically recalibrates your plan without overwhelming you.
+- 🧪 **Mock Test Simulator**: Timed, subject-specific mock tests with instant feedback and AI-driven weak-point analysis.
+- 🛡️ **Secure Auth**: Industry-standard security using **JWT** and **Google OAuth 2.0**.
+- 🌓 **Premium UI/UX**: A responsive, high-performance interface built with **Tailwind CSS** and **Framer Motion**.
 
-## 🛠️ Technology Stack
+## 🛠️ Tech Stack
 
-### Frontend
+### Backend (Robust & Scalable)
+- **Java 21**: Leveraging Virtual Threads for peak performance.
+- **Spring Boot 3.4.4**: The foundation of our micro-service ready architecture.
+- **Spring Security & JWT**: Stateless authentication and role-based access control.
+- **PostgreSQL**: Reliable relational data storage.
+- **Spring Data JPA**: Efficient database abstraction.
+- **Redis (Optional)**: Support for high-speed caching (Simple cache used by default).
+- **OpenAPI 3 (Swagger)**: Comprehensive API documentation.
 
-- **React 18** (with Vite for blazing-fast builds)
-- **Tailwind CSS** (for clean, responsive, modern styling)
-- **Recharts** (for interactive analytics dashboards)
-- **Lucide React** (beautiful iconography)
+### Frontend (Modern & Reactive)
+- **React 18.3**: Modern component-based architecture.
+- **Vite 6.0**: Next-generation frontend tooling.
+- **Zustand**: Lightweight, high-performance state management.
+- **React Query**: Powerful asynchronous state management and data fetching.
+- **Framer Motion**: Smooth, cinematic UI animations.
+- **Recharts**: Data-driven visualization components.
+- **Lucide Icons**: Scalable vector icons.
 
-### Backend
-
-- **Java 17 & Spring Boot 3.2** (Robust, scalable REST APIs)
-- **Spring Security & JWT** (Stateless, secure authentication)
-- **Spring Data JPA / Hibernate** (ORM and database interactions)
-- **PostgreSQL** (Primary relational database)
+---
 
 ## 📁 Project Structure
 
 ```text
 SmartPrep/
-├── backend/                  # Java Spring Boot REST API
-│   ├── src/main/java         # Controllers, Models, Services, Repositories, Security
-│   ├── src/main/resources    # application.properties (Database config)
-│   └── pom.xml               # Maven dependencies
+├── backend/                   # Spring Boot Application
+│   ├── src/main/java          # Business logic (Services, Controllers, Models)
+│   ├── src/main/resources     # Config (application.properties)
+│   └── pom.xml                # Maven configuration
 │
-└── frontend/                 # React frontend application
-    ├── src/
-    │   ├── components/       # Reusable UI components
-    │   ├── pages/            # Page-level components (Auth, Dashboard, Planner, Tests)
-    │   ├── services/         # Axios API integration
-    │   └── store/            # Redux setup (Authentication State)
-    ├── vite.config.js        # Vite config with API proxy
-    └── vercel.json           # SPA Routing rules for Vercel deployment
+├── frontend/                  # React Application
+│   ├── src/
+│   │   ├── components/        # Atomized UI components
+│   │   ├── pages/             # Dashboard, Planner, Auth, etc.
+│   │   ├── services/          # API & Business services
+│   │   ├── store/             # Zustand state management
+│   │   └── styles/            # Global CSS & Tailwind config
+│   └── vite.config.js         # Build & Proxy configuration
 ```
+
+---
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### 📋 Prerequisites
+- **JDK 21**
+- **Node.js 18+**
+- **Maven 3.9+**
+- **PostgreSQL 15+**
 
-Make sure you have the following installed on your machine:
+### 1️⃣ Database Setup
+Create a database named `smartprep_db` in your PostgreSQL instance.
+```sql
+CREATE DATABASE smartprep_db;
+```
 
-- **Node.js** (v16 or higher)
-- **Java Development Kit (JDK) 17**
-- **Maven**
-- **PostgreSQL**
+### 2️⃣ Backend Configuration
+Update `backend/src/main/resources/application.properties` with your credentials:
+```properties
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+```
 
-### 1. Database Setup
-
-1. Open PostgreSQL and create a database named `smartprep`:
-   ```sql
-   CREATE DATABASE smartprep;
-   ```
-2. Update the database credentials in `backend/src/main/resources/application.properties`:
-   ```properties
-   spring.datasource.url=jdbc:postgresql://localhost:5432/smartprep
-   spring.datasource.username=YOUR_POSTGRES_USERNAME
-   spring.datasource.password=YOUR_POSTGRES_PASSWORD
-   ```
-
-### 2. Backend Setup
-
-Navigate to the backend directory, compile, and run the Spring Boot application:
-
+### 3️⃣ Run Application
+**Start Backend:**
 ```bash
 cd backend
 mvn clean install
 mvn spring-boot:run
 ```
 
-> The backend server will start on `http://localhost:8081`.
-
-### 3. Frontend Setup
-
-Open a new terminal tab, navigate to the frontend directory, install dependencies, and start the development server:
-
+**Start Frontend:**
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-> The React app will be accessible at `http://localhost:5173`.
-> _(Note: The frontend is configured to proxy `/api` requests to the backend)._
+The app will be live at `http://localhost:5173` and the API at `http://localhost:8081`.
+
+---
 
 ## 🌐 Deployment
 
-### Frontend (Vercel)
-
-The `/frontend` folder is fully configured for Vercel.
-
-1. Connect your GitHub repository to Vercel.
-2. Under **Project Settings > General**, set the **Root Directory** to `frontend`.
-3. The included `/frontend/vercel.json` ensures that single-page application (SPA) routing works properly without throwing 404 errors.
-
-### Backend
-
-The Spring Boot backend can be packaged into a standalone `.jar` using Maven (`mvn clean package`) and deployed to services like Render, Railway, AWS Elastic Beanstalk, or Heroku. Make sure to provide a production PostgreSQL database URL via environment variables.
+- **Frontend**: Optimized for **Vercel** or **Netlify**. Includes `vercel.json` for SPA routing support.
+- **Backend**: Container-ready. Can be deployed via **Docker** or as a standalone JAR to **AWS**, **Railway**, or **Render**.
 
 ---
 
 <div align="center">
-  <i>Built with ❤️ for students who want to study smarter, not harder.</i>
+  <b>SmartPrep — Study Smarter, Prepare Faster, Succeed Better.</b>
+  <br>
+  <sub>Built with passion for the modern student.</sub>
 </div>
+
