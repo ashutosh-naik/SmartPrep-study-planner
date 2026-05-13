@@ -155,6 +155,35 @@ public class TaskService {
         return mapTask(taskRepository.save(task));
     }
 
+    @Transactional
+    public List<Map<String, Object>> createRecoveryRoadmap(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        StudyPlan plan = studyPlanRepository.findTopByUserIdOrderByCreatedAtDesc(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Active study plan not found"));
+
+        // 1. Identify all pending tasks in the past
+        List<Task> overdueTasks = taskRepository.findByStudyPlanId(plan.getId()).stream()
+                .filter(t -> t.getScheduledDate().isBefore(LocalDate.now()) && "pending".equals(t.getStatus()))
+                .collect(Collectors.toList());
+
+        if (overdueTasks.isEmpty()) return new ArrayList<>();
+
+        // 2. Mark them as backlog and reschedule them starting from tomorrow
+        LocalDate resumeDate = LocalDate.now().plusDays(1);
+        for (int i = 0; i < overdueTasks.size(); i++) {
+            Task t = overdueTasks.get(i);
+            t.setIsBacklog(true);
+            t.setOriginalDate(t.getScheduledDate());
+            // Reschedule: 2 backlog tasks per day
+            t.setScheduledDate(resumeDate.plusDays(i / 2));
+            taskRepository.save(t);
+        }
+
+        return overdueTasks.stream().map(this::mapTask).collect(Collectors.toList());
+    }
+
     /* ─── Mapper ───────────────────────────────────────────────────── */
 
     private Map<String, Object> mapTask(Task task) {
@@ -168,6 +197,8 @@ public class TaskService {
         map.put("durationHours",  task.getDurationHours());
         map.put("status",         task.getStatus());
         map.put("isBacklog",      task.getIsBacklog());
+        map.put("isRevision",     task.getIsRevision());
+        map.put("revisionLevel",  task.getRevisionLevel());
         map.put("originalDate",   task.getOriginalDate());
         map.put("completedAt",    task.getCompletedAt());
         // Custom task fields

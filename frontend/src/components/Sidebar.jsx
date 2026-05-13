@@ -29,6 +29,7 @@ const navItems = [
   { path: "/subjects",    label: "Subjects",           icon: Layers },
   { path: "/notes",       label: "Notes & Flashcards", icon: BookMarked },
   { path: "/tests",       label: "Mock Tests",         icon: FileText },
+  { path: "/pyqs",        label: "PYQ Library",        icon: GraduationCap },
   { path: "/analytics",   label: "Analytics",          icon: BarChart3 },
   { path: "/leaderboard", label: "Leaderboard",        icon: Trophy },
   { path: "/about",       label: "About",              icon: Info },

@@ -18,6 +18,10 @@ export const taskService = {
         const response = await axiosInstance.get('/tasks/summary');
         return response.data;
     },
+    createRecoveryRoadmap: async () => {
+        const response = await axiosInstance.post('/tasks/recovery');
+        return response.data;
+    },
 
     /* ── Custom (personal) daily tasks ── */
     getCustomTasks: async (filter = 'all') => {

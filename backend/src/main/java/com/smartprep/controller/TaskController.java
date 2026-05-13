@@ -50,6 +50,11 @@ public class TaskController {
         return ResponseEntity.ok(ApiResponse.success("Task summary fetched", taskService.getTaskSummary(auth.getName())));
     }
 
+    @PostMapping("/recovery")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> createRecoveryRoadmap(Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.success("Recovery roadmap created", taskService.createRecoveryRoadmap(auth.getName())));
+    }
+
     /* ── Custom (personal) daily tasks ── */
 
     @GetMapping("/custom")

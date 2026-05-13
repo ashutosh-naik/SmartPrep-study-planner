@@ -28,6 +28,7 @@ import InstructorPortal from "./pages/instructor/InstructorPortal";
 import Timetable from "./pages/timetable/Timetable";
 import About from "./pages/about/About";
 import StudySession from "./pages/planner/StudySession";
+import PYQLibrary from "./pages/pyqs/PYQLibrary";
 
 const App = () => {
   const { user } = useAuthStore();
@@ -99,6 +100,7 @@ const App = () => {
                     <Route path="/about" element={<About />} />
                     <Route path="/session" element={<StudySession />} />
                     <Route path="/instructor" element={<InstructorPortal />} />
+                    <Route path="/pyqs" element={<PYQLibrary />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>

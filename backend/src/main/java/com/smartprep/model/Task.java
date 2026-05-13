@@ -45,6 +45,13 @@ public class Task {
     @Column(name = "is_backlog")
     private Boolean isBacklog = false;
 
+    @Builder.Default
+    @Column(name = "is_revision")
+    private Boolean isRevision = false;
+
+    @Column(name = "revision_level")
+    private Integer revisionLevel = 0; // 0=Study, 1=R1, 2=R2, 3=Final
+
     @Column(name = "original_date")
     private LocalDate originalDate;
 

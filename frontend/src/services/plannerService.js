@@ -5,6 +5,10 @@ export const plannerService = {
         const response = await axiosInstance.post('/planner/generate', data);
         return response.data;
     },
+    generateAdaptivePlan: async (planId, examDate, hoursPerDay) => {
+        const response = await axiosInstance.post(`/study-plans/${planId}/generate?examDate=${examDate}&hoursPerDay=${hoursPerDay}`);
+        return response.data;
+    },
 
     getWeeklyPlan: async (weekStart) => {
         const response = await axiosInstance.get(`/planner/weekly?week=${weekStart}`);

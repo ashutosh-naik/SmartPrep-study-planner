@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,5 +26,14 @@ public class StudyPlanController {
     @PostMapping
     public ResponseEntity<ApiResponse<StudyPlan>> createStudyPlan(@RequestBody StudyPlan studyPlan) {
         return ResponseEntity.ok(ApiResponse.success("Study plan created successfully", studyPlanService.createStudyPlan(studyPlan)));
+    }
+
+    @PostMapping("/{id}/generate")
+    public ResponseEntity<ApiResponse<Void>> generatePlan(
+            @PathVariable UUID id,
+            @RequestParam LocalDate examDate,
+            @RequestParam(defaultValue = "3.0") double hoursPerDay) {
+        studyPlanService.generateAdaptivePlan(id, examDate, hoursPerDay);
+        return ResponseEntity.ok(ApiResponse.success("Study plan generated successfully", null));
     }
 }

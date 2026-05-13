@@ -228,19 +228,14 @@ const Dashboard = () => {
     return missed;
   })();
 
-  const handleRecalibrate = () => {
-    if (missedTasks.length === 0) { toast.success("You are on track! No rescheduling needed."); return; }
-    
-    // Auto-calculate required hours per day to finish on time
-    const today = new Date();
-    const examDate = new Date(genExamDate);
-    const remainingDays = Math.max(1, Math.ceil((examDate - today) / 86400000));
-    
-    const totalRemainingHours = subjects.reduce((acc, s) => acc + (s.topics ? s.topics.filter(t => !t.done && t.status !== "COMPLETED").reduce((a, t) => a + (t.estimatedHours || 1), 0) : 0), 0);
-    const recommendedHours = Math.min(12, Math.max(genHours, Math.ceil(totalRemainingHours / remainingDays)));
-    
-    setGenHours(recommendedHours);
-    handleGeneratePlan(); // Re-run with recommended hours
+  const handleRecalibrate = async () => {
+    try {
+      await taskService.createRecoveryRoadmap();
+      toast.success("Backlog recovery roadmap created! Your schedule has been updated.");
+      window.location.reload();
+    } catch (err) {
+      toast.error("Failed to recalibrate schedule. Please try again.");
+    }
   };
 
   const handleGeneratePlan = async () => {
@@ -511,6 +506,9 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-3 no-print">
+            <Link to="/pyqs" className="btn-secondary flex items-center gap-2 text-[13px] hover:scale-105 transition-transform duration-300">
+              <FileText size={16} /> PYQ Library
+            </Link>
             <button onClick={() => setShowGenModal(true)} className="btn-secondary flex items-center gap-2 text-[13px] hover:scale-105 transition-transform duration-300">
               <Plus size={16} /> Generate Plan
             </button>
