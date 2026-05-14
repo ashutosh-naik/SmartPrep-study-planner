@@ -50,4 +50,23 @@ export const subjectService = {
         const res = await axiosInstance.delete(`/subjects/${subjectId}/topics/${topicId}`);
         return res.data;
     },
+
+    /** Add a unit to a subject */
+    createUnit: async (subjectId, { title, description }) => {
+        const res = await axiosInstance.post(`/subjects/${subjectId}/units`, { title, description });
+        return res.data;
+    },
+
+    /** Add a topic to a unit */
+    addTopicToUnit: async (unitId, { title, estimatedHours, status, youtubeVideoUrl, hasMcqs, hasPyqs }) => {
+        const res = await axiosInstance.post(`/units/${unitId}/topics`, {
+            title,
+            estimatedHours,
+            status,
+            youtubeVideoUrl,
+            hasMcqs,
+            hasPyqs
+        });
+        return res.data;
+    }
 };

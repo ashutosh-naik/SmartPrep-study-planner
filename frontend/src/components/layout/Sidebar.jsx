@@ -40,7 +40,7 @@ export const Sidebar = () => {
       label: 'INSIGHTS',
       items: [
         { name: 'Analytics', path: '/analytics', icon: <BarChart2 size={15} strokeWidth={1.8} /> },
-        { name: 'Leaderboard', path: '/leaderboard', icon: <Trophy size={15} strokeWidth={1.8} /> },
+
       ]
     }
   ];

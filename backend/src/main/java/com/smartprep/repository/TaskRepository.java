@@ -24,6 +24,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     List<Task> findByStudyPlanIdAndIsBacklogTrue(UUID studyPlanId);
 
+    void deleteByStudyPlanId(UUID studyPlanId);
+
     @Query("SELECT COUNT(t) FROM Task t WHERE t.studyPlan.id = :planId")
     long countByStudyPlanId(@Param("planId") UUID planId);
 

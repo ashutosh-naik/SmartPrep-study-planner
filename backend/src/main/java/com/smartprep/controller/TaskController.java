@@ -45,6 +45,14 @@ public class TaskController {
         return ResponseEntity.ok(ApiResponse.success("Task skipped", taskService.skipTask(id)));
     }
 
+    @PutMapping("/{id}/subtask")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateSubTask(
+            @PathVariable Long id,
+            @RequestParam String type,
+            @RequestParam boolean completed) {
+        return ResponseEntity.ok(ApiResponse.success("Subtask updated", taskService.updateSubTaskStatus(id, type, completed)));
+    }
+
     @GetMapping("/summary")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTaskSummary(Authentication auth) {
         return ResponseEntity.ok(ApiResponse.success("Task summary fetched", taskService.getTaskSummary(auth.getName())));

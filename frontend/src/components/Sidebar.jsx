@@ -31,7 +31,7 @@ const navItems = [
   { path: "/tests",       label: "Mock Tests",         icon: FileText },
   { path: "/pyqs",        label: "PYQ Library",        icon: GraduationCap },
   { path: "/analytics",   label: "Analytics",          icon: BarChart3 },
-  { path: "/leaderboard", label: "Leaderboard",        icon: Trophy },
+
   { path: "/about",       label: "About",              icon: Info },
 ];
 

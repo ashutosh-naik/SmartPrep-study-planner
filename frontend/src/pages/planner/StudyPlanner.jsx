@@ -458,20 +458,50 @@ const StudyPlanner = () => {
 
               <div className="space-y-3">
                 {dailyTasks.map((task) => (
-                  <div key={task.id} className="p-4 border border-[#E6E6E6] rounded-[10px] hover:border-[#4A3728] transition-all group hover:scale-[1.02] duration-300">
-                    <div className="flex justify-between items-start mb-3">
+                  <div key={task.id} className="p-4 border border-[#E6E6E6] rounded-xl bg-white hover:border-[#4A3728] transition-all group shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
                       <span className="text-[10px] font-bold text-[#6B6B6B] uppercase tracking-widest">{task.subjectName}</span>
-                      <span className="badge-info !text-[10px] !px-2 !py-0.5">{task.durationHours}h</span>
+                      <span className="text-[10px] font-bold text-[#4A3728] bg-gray-100 px-2 py-0.5 rounded-full">{task.durationHours}h</span>
                     </div>
-                    <p className="text-[14px] font-bold text-[#4A3728] leading-tight mb-4">{task.topicName}</p>
-                    {task.status === 'completed' ? (
-                      <div className="flex items-center gap-2 text-green-600">
-                        <CheckCircle2 size={14} />
-                        <span className="text-[12px] font-bold">Completed</span>
-                      </div>
-                    ) : (
-                      <button onClick={() => navigate("/session", { state: { task } })} className="w-full btn-primary !py-2 text-[12px] flex items-center justify-center gap-2">
-                        <Play size={14} fill="currentColor" /> Start Session
+                    <p className={`text-[14px] font-bold leading-tight mb-4 ${task.status === 'completed' ? 'text-[#A3A3A3] line-through' : 'text-[#4A3728]'}`}>
+                      {task.topicName}
+                    </p>
+
+                    {/* Granular Sub-tasks */}
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'video', label: 'Video', icon: Play, checked: task.videoCompleted },
+                        { id: 'notes', label: 'Notes', icon: FileText, checked: task.notesCompleted },
+                        { id: 'mcq', label: 'MCQs', icon: CheckCircle2, checked: task.mcqCompleted, hide: task.hasMcqs === false },
+                        { id: 'pyq', label: 'PYQs', icon: Target, checked: task.pyqCompleted, hide: task.hasPyqs === false },
+                      ].filter(st => !st.hide).map(st => (
+                        <button
+                          key={st.id}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await taskService.updateSubtask(task.id, st.id, !st.checked);
+                              toast.success(`${st.label} updated`);
+                              fetchDailyTasks();
+                            } catch (err) {
+                              toast.error("Update failed");
+                            }
+                          }}
+                          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md border transition-all ${
+                            st.checked 
+                              ? 'bg-[#4A3728] text-white border-[#4A3728]' 
+                              : 'bg-gray-50 text-[#6B6B6B] border-gray-100 hover:border-[#4A3728]'
+                          }`}
+                        >
+                          <st.icon size={10} />
+                          <span className="text-[9px] font-black uppercase tracking-wider">{st.label}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {task.status !== 'completed' && (
+                      <button onClick={() => navigate("/session", { state: { task } })} className="w-full mt-4 py-2 border border-[#4A3728] text-[#4A3728] rounded-lg text-[11px] font-bold hover:bg-[#4A3728] hover:text-white transition-all">
+                        Resume Full Session
                       </button>
                     )}
                   </div>

@@ -41,6 +41,9 @@ public class User {
     @Column(name = "exam_type", length = 50)
     private String examType;
 
+    @Column(length = 150)
+    private String university;
+
     @Column(name = "exam_date")
     private LocalDate examDate;
 

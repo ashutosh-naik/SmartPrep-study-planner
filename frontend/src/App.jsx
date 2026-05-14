@@ -23,11 +23,12 @@ import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/onboarding/Onboarding";
 import SubjectManager from "./pages/subjects/SubjectManager";
 import Notes from "./pages/notes/Notes";
-import Leaderboard from "./pages/leaderboard/Leaderboard";
+
 import InstructorPortal from "./pages/instructor/InstructorPortal";
 import Timetable from "./pages/timetable/Timetable";
 import About from "./pages/about/About";
 import StudySession from "./pages/planner/StudySession";
+import TopicStudyView from "./pages/planner/TopicStudyView";
 import PYQLibrary from "./pages/pyqs/PYQLibrary";
 
 const App = () => {
@@ -95,10 +96,11 @@ const App = () => {
                     <Route path="/analytics" element={<Analytics />} />
                     <Route path="/subjects" element={<SubjectManager />} />
                     <Route path="/notes" element={<Notes />} />
-                    <Route path="/leaderboard" element={<Leaderboard />} />
+
                     <Route path="/timetable" element={<Timetable />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/session" element={<StudySession />} />
+                    <Route path="/study/:taskId" element={<TopicStudyView />} />
                     <Route path="/instructor" element={<InstructorPortal />} />
                     <Route path="/pyqs" element={<PYQLibrary />} />
                     <Route path="/settings" element={<Settings />} />

@@ -156,6 +156,41 @@ public class TaskService {
     }
 
     @Transactional
+    public Map<String, Object> updateSubTaskStatus(Long taskId, String type, boolean completed) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        
+        switch (type.toLowerCase()) {
+            case "video" -> task.setVideoCompleted(completed);
+            case "notes" -> task.setNotesCompleted(completed);
+            case "mcq"   -> task.setMcqCompleted(completed);
+            case "pyq"   -> task.setPyqCompleted(completed);
+        }
+
+        // Auto-update main status
+        boolean allDone = true;
+        if (task.getTopic() != null) {
+            // Video and Notes are always mandatory
+            if (!task.getVideoCompleted() || !task.getNotesCompleted()) allDone = false;
+            if (task.getTopic().getHasMcqs() && !task.getMcqCompleted()) allDone = false;
+            if (task.getTopic().getHasPyqs() && !task.getPyqCompleted()) allDone = false;
+        } else {
+            // For custom tasks, just use the main status
+            allDone = "completed".equals(task.getStatus());
+        }
+
+        if (allDone) {
+            task.setStatus("completed");
+            task.setCompletedAt(LocalDateTime.now());
+        } else {
+            task.setStatus("pending");
+            task.setCompletedAt(null);
+        }
+
+        return mapTask(taskRepository.save(task));
+    }
+
+    @Transactional
     public List<Map<String, Object>> createRecoveryRoadmap(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -163,21 +198,33 @@ public class TaskService {
         StudyPlan plan = studyPlanRepository.findTopByUserIdOrderByCreatedAtDesc(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Active study plan not found"));
 
-        // 1. Identify all pending tasks in the past
+        // Identify pending or partially completed tasks from the past
         List<Task> overdueTasks = taskRepository.findByStudyPlanId(plan.getId()).stream()
-                .filter(t -> t.getScheduledDate().isBefore(LocalDate.now()) && "pending".equals(t.getStatus()))
+                .filter(t -> t.getScheduledDate().isBefore(LocalDate.now()) && !"completed".equals(t.getStatus()))
                 .collect(Collectors.toList());
 
         if (overdueTasks.isEmpty()) return new ArrayList<>();
 
-        // 2. Mark them as backlog and reschedule them starting from tomorrow
+        // Shift them intelligently: 3 topics max per recovery day to avoid overload
         LocalDate resumeDate = LocalDate.now().plusDays(1);
         for (int i = 0; i < overdueTasks.size(); i++) {
             Task t = overdueTasks.get(i);
+            
+            // Adjust duration based on remaining work
+            double effortRemaining = 1.0;
+            if (t.getVideoCompleted()) effortRemaining -= 0.4;
+            if (t.getNotesCompleted()) effortRemaining -= 0.3;
+            if (t.getMcqCompleted())   effortRemaining -= 0.2;
+            if (t.getPyqCompleted())   effortRemaining -= 0.1;
+            
+            if (effortRemaining < 0.1) effortRemaining = 0.1; // Minimum 6 mins for any task
+            
+            BigDecimal originalDuration = t.getDurationHours() != null ? t.getDurationHours() : BigDecimal.ONE;
+            t.setDurationHours(originalDuration.multiply(BigDecimal.valueOf(effortRemaining)));
+            
             t.setIsBacklog(true);
             t.setOriginalDate(t.getScheduledDate());
-            // Reschedule: 2 backlog tasks per day
-            t.setScheduledDate(resumeDate.plusDays(i / 2));
+            t.setScheduledDate(resumeDate.plusDays(i / 3)); 
             taskRepository.save(t);
         }
 
@@ -207,6 +254,21 @@ public class TaskService {
         map.put("deadline",      task.getDeadline());
         map.put("notes",         task.getNotes());
         map.put("isCustomTask",  task.getIsCustomTask());
+        
+        // Granular Progress
+        map.put("videoCompleted", task.getVideoCompleted());
+        map.put("notesCompleted", task.getNotesCompleted());
+        map.put("mcqCompleted",   task.getMcqCompleted());
+        map.put("pyqCompleted",   task.getPyqCompleted());
+
+        // Topic Metadata
+        if (task.getTopic() != null) {
+            map.put("topicDifficulty", task.getTopic().getDifficulty());
+            map.put("youtubeVideoUrl", task.getTopic().getYoutubeVideoUrl());
+            map.put("hasMcqs", task.getTopic().getHasMcqs());
+            map.put("hasPyqs", task.getTopic().getHasPyqs());
+        }
+        
         return map;
     }
 }

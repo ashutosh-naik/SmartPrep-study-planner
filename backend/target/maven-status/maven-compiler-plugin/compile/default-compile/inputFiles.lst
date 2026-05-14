@@ -1,9 +1,11 @@
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\config\CorsConfig.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\config\DataInitializer.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\config\RedisConfig.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\config\SecurityConfig.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\controller\AnalyticsController.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\controller\AuthController.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\controller\FlashcardResultController.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\controller\PYQController.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\controller\StudyPlanController.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\controller\SubjectController.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\controller\TaskController.java
@@ -23,8 +25,10 @@ C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analyt
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\exception\GlobalExceptionHandler.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\exception\ResourceNotFoundException.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\exception\UnauthorizedException.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\Course.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\CustomTask.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\FlashcardResult.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\Paper.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\Question.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\Result.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\StudyPlan.java
@@ -33,9 +37,12 @@ C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analyt
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\Test.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\TimetableSlot.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\Topic.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\University.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\model\User.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\CourseRepository.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\CustomTaskRepository.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\FlashcardResultRepository.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\PaperRepository.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\QuestionRepository.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\ResultRepository.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\StudyPlanRepository.java
@@ -44,6 +51,7 @@ C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analyt
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\TestRepository.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\TimetableRepository.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\TopicRepository.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\UniversityRepository.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\repository\UserRepository.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\security\AuthEntryPoint.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\security\CustomUserDetailsService.java
@@ -53,6 +61,8 @@ C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analyt
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\service\AuthService.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\service\CertificateService.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\service\FlashcardResultService.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\service\PaperScraperService.java
+C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\service\PYQService.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\service\StudyPlanService.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\service\SubjectService.java
 C:\Users\naika\OneDrive\Desktop\SmartPrep-Adaptive-Study-Planner-and-Exam-Analytics-Platform\backend\src\main\java\com\smartprep\service\TaskService.java

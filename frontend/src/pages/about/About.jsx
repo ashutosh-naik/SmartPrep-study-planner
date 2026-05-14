@@ -77,7 +77,7 @@ export default function About() {
                  {[
                     "Persistent, database-backed study plans.",
                     "Automated performance forecasting.",
-                    "Built-in accountability via streaks and leaderboard.",
+                    "Built-in accountability via personalized streaks.",
                     "Zero-friction task and subject management.",
                  ].map((li, i) => (
                     <li key={i} className="flex items-start gap-3 text-[14px] font-bold text-[#111111]">

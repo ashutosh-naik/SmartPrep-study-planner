@@ -1,42 +1,38 @@
 package com.smartprep.controller;
 
-import com.smartprep.dto.ApiResponse;
-import com.smartprep.model.QuestionPaper;
+import com.smartprep.model.Course;
+import com.smartprep.model.Paper;
 import com.smartprep.model.University;
-import com.smartprep.repository.QuestionPaperRepository;
-import com.smartprep.repository.UniversityRepository;
+import com.smartprep.service.PYQService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pyqs")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class PYQController {
 
-    private final UniversityRepository universityRepository;
-    private final QuestionPaperRepository questionPaperRepository;
+    private final PYQService pyqService;
 
     @GetMapping("/universities")
-    public ResponseEntity<ApiResponse<List<University>>> getAllUniversities() {
-        return ResponseEntity.ok(ApiResponse.success("Universities fetched successfully", universityRepository.findAll()));
+    public ResponseEntity<List<University>> getUniversities() {
+        return ResponseEntity.ok(pyqService.getAllUniversities());
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<ApiResponse<List<QuestionPaper>>> searchPapers(
-            @RequestParam UUID universityId,
+    @GetMapping("/courses")
+    public ResponseEntity<List<Course>> getCourses(@RequestParam String university) {
+        return ResponseEntity.ok(pyqService.getCoursesByUniversity(university));
+    }
+
+    @GetMapping("/papers")
+    public ResponseEntity<List<Paper>> getPapers(
+            @RequestParam String university,
             @RequestParam String course,
-            @RequestParam Integer semester) {
-        return ResponseEntity.ok(ApiResponse.success("Papers fetched successfully", 
-            questionPaperRepository.findByUniversityIdAndCourseAndSemester(universityId, course, semester)));
-    }
-
-    @GetMapping("/subject")
-    public ResponseEntity<ApiResponse<List<QuestionPaper>>> findBySubject(@RequestParam String name) {
-        return ResponseEntity.ok(ApiResponse.success("Papers fetched successfully", 
-            questionPaperRepository.findBySubjectNameContainingIgnoreCase(name)));
+            @RequestParam(required = false) Integer year) {
+        return ResponseEntity.ok(pyqService.getPapers(university, course, year));
     }
 }

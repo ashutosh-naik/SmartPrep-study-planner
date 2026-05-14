@@ -104,6 +104,44 @@ const SubjectManager = () => {
   const [editingTopicName, setEditingTopicName] = useState("");
   const [editingTopicHours, setEditingTopicHours] = useState("");
 
+  // Unit States
+  const [showAddUnitTo, setShowAddUnitTo] = useState(null);
+  const [newUnitTitle, setNewUnitTitle] = useState("");
+
+  const addUnit = async (subjectId) => {
+    if (!newUnitTitle.trim()) { toast.error("Enter unit title"); return; }
+    try {
+      const res = await subjectService.createUnit(subjectId, { title: newUnitTitle.trim() });
+      toast.success("Unit created");
+      setNewUnitTitle("");
+      setShowAddUnitTo(null);
+      // Reload subjects to get updated tree
+      const updated = await subjectService.getSubjects();
+      setSubjects(updated.data);
+    } catch (err) {
+      toast.error("Failed to create unit");
+    }
+  };
+
+  const addTopicToUnit = async (unitId) => {
+    if (!newTopicName.trim()) { toast.error("Enter topic name"); return; }
+    try {
+      await subjectService.addTopicToUnit(unitId, { 
+        title: newTopicName.trim(), 
+        estimatedHours: newTopicHours ? parseFloat(newTopicHours) : 1,
+        status: 'NOT_STARTED'
+      });
+      toast.success("Topic added to unit");
+      setNewTopicName("");
+      setNewTopicHours("");
+      setAddingTopicTo(null);
+      const updated = await subjectService.getSubjects();
+      setSubjects(updated.data);
+    } catch (err) {
+      toast.error("Failed to add topic");
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -301,44 +339,87 @@ const SubjectManager = () => {
                 </div>
 
                 {isExpanded && (
-                  <div className="bg-[#F9FAFB] border-t border-[#E6E6E6] p-6">
-                    <div className="space-y-2 mb-6">
-                      {(subject.topics || []).map((topic) => {
-                        const s = STATUS_STATES[topic.status || "NOT_STARTED"];
-                        return (
-                          <div key={topic.id} className="flex items-center justify-between bg-white p-3 rounded-[10px] border border-[#E6E6E6] hover:border-[#4A3728] transition-all group hover:scale-[1.01] duration-300">
-                            <div className="flex items-center gap-4">
-                              <button onClick={(e) => { e.stopPropagation(); cycleTopicStatus(subject.id, topic.id); }} className={`${s.iconColor} hover:scale-110 transition-transform`}>
-                                <s.icon size={18} />
-                              </button>
-                              <span className={`text-[13px] font-bold ${topic.status === 'COMPLETED' ? 'text-[#A3A3A3] line-through' : 'text-[#4A3728]'}`}>{topic.name}</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                               <span className="text-[11px] font-bold text-[#6B6B6B] uppercase tracking-tighter">{(topic.estimatedHours || 0)}h</span>
-                               <button onClick={(e) => { e.stopPropagation(); deleteTopic(subject.id, topic.id); }} className="text-[#A3A3A3] hover:text-red-500"><Trash2 size={14} /></button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {subject.topics?.length === 0 && <p className="text-center py-4 text-[#6B6B6B] text-[13px] font-medium">No topics yet.</p>}
-                    </div>
-
-                    {addingTopicTo === subject.id ? (
-                      <div className="flex flex-col gap-3">
-                         <div className="flex gap-2">
-                            <input className="input-field flex-1" placeholder="Topic Name" value={newTopicName} onChange={e => setNewTopicName(e.target.value)} autoFocus />
-                            <input type="number" className="input-field w-24" placeholder="Hrs" value={newTopicHours} onChange={e => setNewTopicHours(e.target.value)} />
-                         </div>
-                         <div className="flex gap-2">
-                            <button onClick={() => addTopic(subject.id)} className="btn-primary !py-2 !px-4 text-[12px]">Add</button>
-                            <button onClick={() => setAddingTopicTo(null)} className="btn-secondary !py-2 !px-4 text-[12px]">Cancel</button>
-                         </div>
+                  <div className="bg-[#F9FAFB] border-t border-[#E6E6E6] p-6 space-y-8">
+                    
+                    {/* Units & Topics */}
+                    {(subject.units || []).length === 0 && (subject.topics || []).length === 0 && (
+                      <div className="text-center py-10">
+                        <p className="text-[13px] font-medium text-[#6B6B6B]">No syllabus data yet.</p>
                       </div>
-                    ) : (
-                      <button onClick={() => setAddingTopicTo(subject.id)} className="w-full py-2 border border-dashed border-[#E6E6E6] rounded-[8px] text-[12px] font-bold text-[#6B6B6B] hover:text-[#111111] hover:border-[#111111] transition-all">
-                        + Add Topic
-                      </button>
                     )}
+
+                    {(subject.units || []).map((unit) => (
+                      <div key={unit.id} className="space-y-3">
+                        <div className="flex items-center justify-between border-b border-[#E6E6E6] pb-2 mb-4">
+                          <h4 className="text-[14px] font-black text-[#111111] uppercase tracking-wider">{unit.title}</h4>
+                          <button 
+                            onClick={() => setAddingTopicTo(unit.id)}
+                            className="text-[11px] font-bold text-[#4A3728] hover:underline flex items-center gap-1"
+                          >
+                            <Plus size={12} /> Add Topic
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {(unit.topics || []).map((topic) => {
+                            const s = STATUS_STATES[topic.status || "NOT_STARTED"];
+                            return (
+                              <div key={topic.id} className="flex items-center justify-between bg-white p-3 rounded-[10px] border border-[#E6E6E6] hover:border-[#4A3728] transition-all group hover:scale-[1.01] duration-300">
+                                <div className="flex items-center gap-4">
+                                  <button onClick={(e) => { e.stopPropagation(); cycleTopicStatus(subject.id, topic.id); }} className={`${s.iconColor} hover:scale-110 transition-transform`}>
+                                    <s.icon size={18} />
+                                  </button>
+                                  <span className={`text-[13px] font-bold ${topic.status === 'COMPLETED' ? 'text-[#A3A3A3] line-through' : 'text-[#4A3728]'}`}>{topic.title}</span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                   <span className="text-[11px] font-bold text-[#6B6B6B] uppercase tracking-tighter">{(topic.estimatedHours || 0)}h</span>
+                                   <button onClick={(e) => { e.stopPropagation(); deleteTopic(subject.id, topic.id); }} className="text-[#A3A3A3] hover:text-red-500"><Trash2 size={14} /></button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          
+                          {addingTopicTo === unit.id && (
+                            <div className="bg-white p-4 rounded-xl border border-[var(--primary)] animate-fade-in shadow-sm">
+                               <div className="flex gap-2 mb-3">
+                                  <input className="input-field flex-1" placeholder="Topic Name" value={newTopicName} onChange={e => setNewTopicName(e.target.value)} autoFocus />
+                                  <input type="number" className="input-field w-24" placeholder="Hrs" value={newTopicHours} onChange={e => setNewTopicHours(e.target.value)} />
+                               </div>
+                               <div className="flex gap-2">
+                                  <button onClick={() => addTopicToUnit(unit.id)} className="btn-primary !py-2 !px-4 text-[11px]">Add Topic</button>
+                                  <button onClick={() => setAddingTopicTo(null)} className="btn-secondary !py-2 !px-4 text-[11px]">Cancel</button>
+                               </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Unit Creation Bar */}
+                    <div className="pt-4 flex flex-col gap-4">
+                      {showAddUnitTo === subject.id ? (
+                        <div className="bg-white p-6 rounded-xl border-2 border-[#111111] animate-fade-in">
+                           <h5 className="text-[12px] font-bold uppercase tracking-widest text-[#111111] mb-4">New Unit</h5>
+                           <input 
+                             className="input-field mb-4" 
+                             placeholder="Unit Title (e.g. Unit 1: Fundamentals)" 
+                             value={newUnitTitle} 
+                             onChange={e => setNewUnitTitle(e.target.value)} 
+                           />
+                           <div className="flex gap-3">
+                              <button onClick={() => addUnit(subject.id)} className="btn-primary !py-2 !px-6 text-[12px]">Create Unit</button>
+                              <button onClick={() => setShowAddUnitTo(null)} className="btn-secondary !py-2 !px-6 text-[12px]">Cancel</button>
+                           </div>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => setShowAddUnitTo(subject.id)}
+                          className="w-full py-3 bg-[#111111] text-white rounded-xl text-[12px] font-bold hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                        >
+                          <Plus size={16} /> Create New Unit
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

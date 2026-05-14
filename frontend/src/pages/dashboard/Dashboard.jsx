@@ -371,7 +371,7 @@ const Dashboard = () => {
              
              <div className="flex justify-between items-center mb-8">
                <div>
-                  <h2 className="text-2xl font-bold text-[var(--primary)] tracking-tight">Generate Study Protocol</h2>
+                  <h2 className="text-2xl font-bold text-[var(--primary)] tracking-tight">Generate Study Plan</h2>
                   <p className="text-[13px] text-[#6B6B6B] font-medium mt-1">Configure your adaptive learning path</p>
                </div>
                <button onClick={() => setShowGenModal(false)} className="w-10 h-10 rounded-full hover:bg-[#F1F1F1] flex items-center justify-center transition-colors">
@@ -420,7 +420,7 @@ const Dashboard = () => {
                 <div className="pt-4 flex gap-4">
                    <button onClick={handleGeneratePlan} className="btn-primary flex-1 !py-5 text-[14px] uppercase tracking-widest font-black flex items-center justify-center gap-3">
                       <Zap size={18} className="text-[var(--accent-gold)]" />
-                      Initialize Protocol
+                      Generate Plan
                    </button>
                 </div>
              </div>
@@ -634,28 +634,64 @@ const Dashboard = () => {
                               </div>
                             </button>
 
-                            {isExpanded && (
-                              <div className="bg-[#F9FAFB] border-t border-[#E6E6E6] p-4 space-y-2">
-                                {topics.map((task) => (
-                                  <div key={task.id} className="flex items-center justify-between bg-white p-3 rounded-[8px] border border-[#E6E6E6]">
-                                    <div className="flex items-center gap-3">
-                                      <div className={`w-4 h-4 rounded-full border-2 ${task.status === 'completed' ? 'bg-[#4A3728] border-[#4A3728]' : 'border-[#E6E6E6]'}`} />
-                                      <span className={`text-[13px] font-medium ${task.status === 'completed' ? 'text-[#A3A3A3] line-through' : 'text-[#4A3728]'}`}>
-                                        {task.title || task.topicName}
-                                      </span>
+                              {isExpanded && (
+                                <div className="bg-[#F9FAFB] border-t border-[#E6E6E6] p-4 space-y-3">
+                                  {topics.map((task) => (
+                                    <div key={task.id} className="bg-white p-4 rounded-xl border border-[#E6E6E6] shadow-sm">
+                                      <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-3">
+                                          <div className={`w-3 h-3 rounded-full ${task.status === 'completed' ? 'bg-green-500' : 'bg-amber-500'}`} />
+                                          <span className={`text-[14px] font-bold ${task.status === 'completed' ? 'text-[#A3A3A3] line-through' : 'text-[#4A3728]'}`}>
+                                            {task.title || task.topicName}
+                                          </span>
+                                          {task.topicDifficulty && (
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                              task.topicDifficulty === 'HARD' ? 'bg-red-50 text-red-500' : 
+                                              task.topicDifficulty === 'MEDIUM' ? 'bg-amber-50 text-amber-500' : 'bg-green-50 text-green-500'
+                                            }`}>
+                                              {task.topicDifficulty}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                           <span className="text-[11px] font-bold text-[#6B6B6B] tracking-tight">{task.durationHours}h</span>
+                                        </div>
+                                      </div>
+
+                                      {/* Granular Sub-tasks */}
+                                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                        {[
+                                          { id: 'video', label: 'Video', icon: Play, checked: task.videoCompleted },
+                                          { id: 'notes', label: 'Notes', icon: FileText, checked: task.notesCompleted },
+                                          { id: 'mcq', label: 'MCQs', icon: CheckCircle2, checked: task.mcqCompleted, hide: task.hasMcqs === false },
+                                          { id: 'pyq', label: 'PYQs', icon: Target, checked: task.pyqCompleted, hide: task.hasPyqs === false },
+                                        ].filter(st => !st.hide).map(st => (
+                                          <button
+                                            key={st.id}
+                                            onClick={async () => {
+                                              try {
+                                                await taskService.updateSubtask(task.id, st.id, !st.checked);
+                                                toast.success(`${st.label} updated`);
+                                                window.location.reload();
+                                              } catch (err) {
+                                                toast.error("Update failed");
+                                              }
+                                            }}
+                                            className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${
+                                              st.checked 
+                                                ? 'bg-[var(--primary)] text-white border-[var(--primary)]' 
+                                                : 'bg-gray-50 text-[#6B6B6B] border-gray-100 hover:border-[var(--primary)]'
+                                            }`}
+                                          >
+                                            <st.icon size={12} />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">{st.label}</span>
+                                          </button>
+                                        ))}
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                      <span className="text-[11px] font-bold text-[#6B6B6B] uppercase tracking-tighter">{(task.durationHours || 0)}h</span>
-                                      {task.status !== 'completed' && (
-                                        <button onClick={() => navigate("/session", { state: { task } })} className="text-[11px] font-bold text-[#4A3728] border border-[#4A3728] px-3 py-1 rounded-[4px] hover:bg-[#4A3728] hover:text-white transition-all duration-300 hover:scale-105">
-                                          Resume
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                                  ))}
+                                </div>
+                              )}
                           </div>
                         );
                       })}

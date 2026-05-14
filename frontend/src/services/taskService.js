@@ -14,6 +14,10 @@ export const taskService = {
         const response = await axiosInstance.put(`/tasks/${id}/skip`);
         return response.data;
     },
+    updateSubtask: async (id, type, completed) => {
+        const response = await axiosInstance.put(`/tasks/${id}/subtask?type=${type}&completed=${completed}`);
+        return response.data;
+    },
     getTaskSummary: async () => {
         const response = await axiosInstance.get('/tasks/summary');
         return response.data;

@@ -30,7 +30,7 @@ const Settings = () => {
   const { user } = useAuthStore();
   const { theme: themeMode, setTheme: setThemeMode } = useThemeStore();
   const [profile, setProfile] = useState({
-    name: "", email: "", course: "", year: "", examType: "", examDate: "",
+    name: "", email: "", course: "", year: "", university: "", examType: "", examDate: "",
     studyHoursPerDay: 4, preferredStudyTime: "", breakDuration: 15,
   });
   const [subjects, setSubjects] = useState([]);
@@ -51,7 +51,7 @@ const Settings = () => {
   useEffect(() => {
     if (user) setProfile({
       name: user.name || "", email: user.email || "", course: user.course || "",
-      year: user.year || "", examType: user.examType || "", examDate: user.examDate || "",
+      year: user.year || "", university: user.university || "", examType: user.examType || "", examDate: user.examDate || "",
       studyHoursPerDay: user.studyHoursPerDay || 4, preferredStudyTime: user.preferredStudyTime || "",
       breakDuration: user.breakDuration || 15,
     });
@@ -175,7 +175,7 @@ const Settings = () => {
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                             <label className="text-[11px] font-bold text-[#4A3728] uppercase tracking-wider mb-2 block">University</label>
-                            <input value={user?.university || ""} className="input-field bg-[#F9FAFB]" disabled />
+                            <input value={profile.university} onChange={e => setProfile({...profile, university: e.target.value})} className="input-field" placeholder="Enter your university name" />
                         </div>
                       </div>
                   </div>

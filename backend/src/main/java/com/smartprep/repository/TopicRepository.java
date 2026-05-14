@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Repository
 public interface TopicRepository extends JpaRepository<Topic, UUID> {
-    List<Topic> findBySubjectId(UUID subjectId);
-    List<Topic> findBySubjectStudyPlanId(UUID planId);
+    List<Topic> findByUnitId(UUID unitId);
+    List<Topic> findByUnitSubjectId(UUID subjectId);
+    List<Topic> findByUnitSubjectStudyPlanId(UUID planId);
 }

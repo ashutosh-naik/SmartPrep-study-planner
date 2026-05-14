@@ -89,5 +89,23 @@ public class Task {
     @Column(name = "is_custom_task")
     private Boolean isCustomTask = false;
 
+    /* ── Granular Progress Tracking ── */
+
+    @Builder.Default
+    @Column(name = "video_completed")
+    private Boolean videoCompleted = false;
+
+    @Builder.Default
+    @Column(name = "notes_completed")
+    private Boolean notesCompleted = false;
+
+    @Builder.Default
+    @Column(name = "mcq_completed")
+    private Boolean mcqCompleted = false;
+
+    @Builder.Default
+    @Column(name = "pyq_completed")
+    private Boolean pyqCompleted = false;
+
 }
 

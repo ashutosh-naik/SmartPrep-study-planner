@@ -2,10 +2,8 @@ package com.smartprep.service;
 
 import com.smartprep.exception.ResourceNotFoundException;
 import com.smartprep.model.StudyPlan;
-import com.smartprep.model.Subject;
 import com.smartprep.model.Task;
 import com.smartprep.model.Topic;
-import com.smartprep.repository.QuestionPaperRepository;
 import com.smartprep.repository.StudyPlanRepository;
 import com.smartprep.repository.TaskRepository;
 import com.smartprep.repository.TopicRepository;
@@ -16,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,7 +24,6 @@ public class StudyPlanService {
     private final StudyPlanRepository studyPlanRepository;
     private final TaskRepository taskRepository;
     private final TopicRepository topicRepository;
-    private final QuestionPaperRepository questionPaperRepository;
 
     public List<StudyPlan> getStudyPlansByUserId(UUID userId) {
         return studyPlanRepository.findByUserId(userId);
@@ -46,51 +42,59 @@ public class StudyPlanService {
         StudyPlan plan = studyPlanRepository.findById(planId)
                 .orElseThrow(() -> new ResourceNotFoundException("Study plan not found"));
 
-        List<Topic> allTopics = topicRepository.findBySubjectStudyPlanId(planId);
-        
-        // Sort topics by "Importance" (Frequency in PYQs)
-        allTopics.sort((t1, t2) -> {
-            int w1 = questionPaperRepository.findBySubjectNameContainingIgnoreCase(t1.getTitle()).size();
-            int w2 = questionPaperRepository.findBySubjectNameContainingIgnoreCase(t2.getTitle()).size();
-            return Integer.compare(w2, w1); // High frequency first
-        });
-        
+        // Clear existing tasks for fresh generation
+        taskRepository.deleteByStudyPlanId(planId);
+
+        List<Topic> allTopics = topicRepository.findByUnitSubjectStudyPlanId(planId);
         if (allTopics.isEmpty()) return;
 
         LocalDate startDate = LocalDate.now();
-        long totalDays = ChronoUnit.DAYS.between(startDate, examDate);
+        LocalDate cutoffDate = examDate.minusDays(7); // Reserve last week for final review
         
-        if (totalDays <= 0) return;
+        long daysAvailable = ChronoUnit.DAYS.between(startDate, cutoffDate);
+        if (daysAvailable <= 0) {
+            cutoffDate = examDate.minusDays(1);
+        }
 
-        // Calculate distribution
-        int topicsPerDay = (int) Math.ceil((double) allTopics.size() / (totalDays * 0.7)); // Reserve 30% for revisions
-        
-        for (int i = 0; i < allTopics.size(); i++) {
-            Topic topic = allTopics.get(i);
-            LocalDate scheduledDate = startDate.plusDays(i / topicsPerDay);
-            
-            if (scheduledDate.isAfter(examDate.minusDays(7))) {
-                scheduledDate = examDate.minusDays(7); // Ensure core study finishes before final week
+        LocalDate currentDate = startDate;
+        double remainingHoursToday = hoursPerDay;
+
+        for (Topic topic : allTopics) {
+            double topicHours = topic.getEstimatedHours() != null ? topic.getEstimatedHours().doubleValue() : 2.0;
+
+            // If a topic is very long or doesn't fit in remaining time, move to next day
+            if (topicHours > remainingHoursToday && remainingHoursToday < hoursPerDay * 0.4) {
+                currentDate = currentDate.plusDays(1);
+                remainingHoursToday = hoursPerDay;
+            }
+
+            // Cap the date at cutoff
+            if (currentDate.isAfter(cutoffDate)) {
+                currentDate = cutoffDate;
             }
 
             Task task = Task.builder()
                 .user(plan.getUser())
                 .studyPlan(plan)
                 .topic(topic)
-                .scheduledDate(scheduledDate)
-                .durationHours(BigDecimal.valueOf(2.0))
+                .scheduledDate(currentDate)
+                .durationHours(BigDecimal.valueOf(topicHours))
                 .status("pending")
                 .isRevision(false)
                 .revisionLevel(0)
+                .videoCompleted(false)
+                .notesCompleted(false)
+                .mcqCompleted(false)
+                .pyqCompleted(false)
                 .isCustomTask(false)
                 .build();
             
             taskRepository.save(task);
-            
-            // Schedule Revisions
-            scheduleRevision(task, scheduledDate.plusDays(3), 1, examDate);
-            scheduleRevision(task, scheduledDate.plusDays(10), 2, examDate);
-            scheduleRevision(task, examDate.minusDays(2), 3, examDate);
+            remainingHoursToday -= topicHours;
+
+            // Standard Spaced Repetition (R1 after 3 days, R2 after 10 days)
+            scheduleRevision(task, currentDate.plusDays(3), 1, examDate);
+            scheduleRevision(task, currentDate.plusDays(10), 2, examDate);
         }
     }
 
