@@ -63,7 +63,17 @@ const TaskTracking = () => {
       setLoading(true);
       try {
         const res = await taskService.getCustomTasks("all");
-        if (res.success && res.data) setTasks(res.data);
+        if (res.success && res.data && res.data.length > 0) {
+          setTasks(res.data);
+        } else {
+          // Dynamic suggestions if no tasks found
+          const suggestions = [
+            { id: "s1", title: "Setup your study goal for the week", subjectName: "Planning", priority: "HIGH", durationHours: 0.5, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") },
+            { id: "s2", title: "Review last week's mock test errors", subjectName: "Data Structures", priority: "MEDIUM", durationHours: 1.5, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") },
+            { id: "s3", title: "Organize digital notes for Networking", subjectName: "Networking", priority: "LOW", durationHours: 1.0, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") }
+          ];
+          setTasks(suggestions);
+        }
       } catch (err) { toast.error("Failed to load tasks"); }
       finally { setLoading(false); }
     })();
@@ -88,32 +98,94 @@ const TaskTracking = () => {
   const handleToggleComplete = async (task) => {
     const newStatus = task.status === "completed" ? "pending" : "completed";
     setTasks(tasks.map((t) => t.id === task.id ? { ...t, status: newStatus } : t));
+    
+    // Robust check for local tasks (suggestions starting with 's' or number timestamps)
+    const isLocal = String(task.id).startsWith("s") || !isNaN(task.id);
+    if (isLocal) {
+      toast.success(newStatus === "completed" ? "Great job! (Local)" : "Task reopened");
+      return;
+    }
+
     try {
-      if (newStatus === "completed") await taskService.completeTask(task.id);
-      else await taskService.updateCustomTask(task.id, { ...task, status: newStatus });
-    } catch {
+      // Clean payload: only send what's needed to avoid serialization errors
+      const payload = { 
+        status: newStatus,
+        title: task.title || task.topicName,
+        priority: task.priority,
+        subjectName: task.subjectName,
+        durationHours: task.durationHours,
+        notes: task.notes,
+        scheduledDate: task.scheduledDate
+      };
+      const res = await taskService.updateCustomTask(task.id, payload);
+      if (res.success) {
+        toast.success(newStatus === "completed" ? "Mission accomplished!" : "Mission reopened");
+      } else {
+        throw new Error(res.message || "Failed to update");
+      }
+    } catch (err) {
+      // Revert on failure
       setTasks(tasks.map((t) => t.id === task.id ? { ...t, status: task.status } : t));
+      const msg = err.response?.data?.message || err.message || "Connection error";
+      toast.error(`Sync failed: ${msg}`);
+      console.error("Task Sync Error:", err);
     }
   };
 
   const handleDelete = async (id) => {
+    // Robust check for local tasks
+    const isLocal = String(id).startsWith("s") || !isNaN(id);
+    if (isLocal) {
+      setTasks(tasks.filter((t) => t.id !== id));
+      toast.success("Task removed locally");
+      return;
+    }
+
     try {
       await taskService.deleteCustomTask(id);
       setTasks(tasks.filter((t) => t.id !== id));
       toast.success("Task removed");
-    } catch { toast.error("Failed to delete"); }
+    } catch { toast.error("Failed to delete from server"); }
+  };
+
+  const handleEdit = (task) => {
+    setEditingTask(task);
+    setForm({
+      title: task.title || task.topicName || "",
+      subjectName: task.subjectName || "",
+      priority: task.priority || "MEDIUM",
+      durationHours: task.durationHours || 1,
+      scheduledDate: task.scheduledDate || format(new Date(), "yyyy-MM-dd"),
+      notes: task.notes || ""
+    });
+    setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const taskData = { ...form, durationHours: parseFloat(form.durationHours) || 1 };
     try {
-      if (editingTask) {
+      if (editingTask && !String(editingTask.id).startsWith("s")) {
+        // Real task update
         await taskService.updateCustomTask(editingTask.id, taskData);
         setTasks(tasks.map((t) => t.id === editingTask.id ? { ...t, ...taskData } : t));
+        toast.success("Task updated");
       } else {
+        // New task creation (or converting a suggestion to a real task)
         const res = await taskService.createCustomTask(taskData);
-        if (res.success) setTasks([res.data, ...tasks]);
+        if (res.success) {
+          if (editingTask && String(editingTask.id).startsWith("s")) {
+            // Remove the suggestion and add the new real task
+            setTasks([res.data, ...tasks.filter(t => t.id !== editingTask.id)]);
+          } else {
+            setTasks([res.data, ...tasks]);
+          }
+          toast.success("Task saved to database");
+        } else {
+          // Local fallback
+          const localTask = { ...taskData, id: Date.now(), status: "pending" };
+          setTasks([localTask, ...tasks.filter(t => t.id !== (editingTask?.id))]);
+        }
       }
       setShowModal(false);
       setForm(defaultForm());
@@ -211,6 +283,36 @@ const TaskTracking = () => {
           </div>
         </div>
 
+        {/* Quick Add Section */}
+        <div className="card mb-8 p-4 bg-[#F9FAFB]/50 border-dashed border-[#E6E6E6] hover:border-[#4A3728] transition-all group">
+          <div className="flex items-center gap-4">
+             <div className="w-10 h-10 rounded-full bg-white border border-[#E6E6E6] flex items-center justify-center text-[#4A3728] group-focus-within:bg-[#4A3728] group-focus-within:text-white transition-all">
+                <Plus size={20} />
+             </div>
+             <input 
+               type="text" 
+               placeholder="Add a quick task... (e.g. Study Recursion for 2 hours)"
+               className="flex-1 bg-transparent border-none outline-none text-[15px] font-medium text-[#4A3728] placeholder:text-[#A3A3A3]"
+               onKeyDown={async (e) => {
+                 if (e.key === 'Enter' && e.target.value.trim()) {
+                   const title = e.target.value.trim();
+                   const newTask = { title, priority: "MEDIUM", durationHours: 1, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") };
+                   try {
+                     const res = await taskService.createCustomTask(newTask);
+                     if (res.success) setTasks([res.data, ...tasks]);
+                     else setTasks([{...newTask, id: Date.now()}, ...tasks]); // Fallback
+                     e.target.value = "";
+                     toast.success("Task added to your mission!");
+                   } catch { toast.error("Failed to add task"); }
+                 }
+               }}
+             />
+             <div className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-[#A3A3A3] uppercase tracking-widest">
+                Press <span className="px-1.5 py-0.5 rounded bg-white border border-[#E6E6E6] text-[#4A3728]">Enter</span> to save
+             </div>
+          </div>
+        </div>
+
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
           <div className="flex items-center gap-2">
@@ -218,9 +320,11 @@ const TaskTracking = () => {
               <button key={k} onClick={() => setFilter(k)} className={`px-4 py-1.5 rounded-[8px] text-[12px] font-bold transition-all hover:scale-105 duration-300 ${filter === k ? "bg-[#4A3728] text-white shadow-md" : "bg-white border border-[#E6E6E6] text-[#6B6B6B] hover:text-[#4A3728] hover:border-[#4A3728]"}`}>{k.charAt(0).toUpperCase() + k.slice(1)}</button>
             ))}
           </div>
-          <button onClick={() => { setEditingTask(null); setShowModal(true); }} className="btn-primary text-[13px] flex items-center gap-2 hover:scale-105 transition-transform duration-300 shadow-lg">
-            <Plus size={16} /> New Task
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => { setEditingTask(null); setShowModal(true); }} className="btn-secondary text-[13px] border-[#4A3728] text-[#4A3728] flex items-center gap-2 hover:bg-[#4A3728] hover:text-white transition-all">
+              Advanced Create
+            </button>
+          </div>
         </div>
 
         {/* Task List */}
@@ -241,9 +345,10 @@ const TaskTracking = () => {
                     {task.subjectName && <span className="text-[11px] font-bold text-[#A3A3A3] flex items-center gap-1">/ {task.subjectName}</span>}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => setShowPomodoro(true)} className="p-2 text-[#6B6B6B] hover:text-[#4A3728] transition-transform hover:scale-110 duration-300"><Timer size={16} /></button>
-                  <button onClick={() => handleDelete(task.id)} className="p-2 text-[#6B6B6B] hover:text-red-500 transition-transform hover:scale-110 duration-300"><Trash2 size={16} /></button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => { setPomodoroTask(task.title || task.topicName); setShowPomodoro(true); }} className="p-2 text-[#6B6B6B] hover:text-[#4A3728] transition-transform hover:scale-110 duration-300" title="Start Focus Session"><Timer size={16} /></button>
+                  <button onClick={() => handleEdit(task)} className="p-2 text-[#6B6B6B] hover:text-[#4A3728] transition-transform hover:scale-110 duration-300" title="Edit Task"><Edit3 size={16} /></button>
+                  <button onClick={() => handleDelete(task.id)} className="p-2 text-[#6B6B6B] hover:text-red-500 transition-transform hover:scale-110 duration-300" title="Delete Task"><Trash2 size={16} /></button>
                 </div>
               </div>
             );

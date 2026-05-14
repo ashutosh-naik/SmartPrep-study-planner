@@ -64,7 +64,7 @@ const Register = () => {
             to="/"
             className="flex items-center gap-3 mb-10 hover:opacity-80 transition-opacity tracking-wide"
           >
-            <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-600/30">
+            <div className="w-10 h-10 bg-[#4A3728] rounded-xl flex items-center justify-center shadow-lg shadow-[#4A3728]/30">
               <GraduationCap size={22} className="text-white" />
             </div>
             <span className="font-heading font-bold text-xl text-text-primary">
@@ -138,7 +138,7 @@ const Register = () => {
                     key={type.value}
                     type="button"
                     onClick={() => setExamType(type.value)}
-                    className={`p-4 rounded-xl border-2 text-left transition-all ${examType === type.value ? "border-primary-600 bg-primary-50" : "border-gray-200 hover:border-gray-300"}`}
+                    className={`p-4 rounded-xl border-2 text-left transition-all ${examType === type.value ? "border-[#4A3728] bg-[#4A3728]/5" : "border-gray-200 hover:border-gray-300"}`}
                   >
                     <p className="font-semibold text-sm text-text-primary">
                       {type.label}
@@ -192,7 +192,7 @@ const Register = () => {
             Already have an account?{" "}
             <Link
               to="/login"
-              className="text-primary-600 font-semibold hover:underline"
+              className="text-[#4A3728] font-semibold hover:underline"
             >
               Log In
             </Link>

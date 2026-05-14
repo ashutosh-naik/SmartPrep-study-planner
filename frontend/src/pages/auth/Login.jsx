@@ -72,7 +72,7 @@ const Login = () => {
             to="/"
             className="flex items-center gap-3 mb-10 hover:opacity-80 transition-opacity tracking-wide"
           >
-            <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-600/30">
+            <div className="w-10 h-10 bg-[#4A3728] rounded-xl flex items-center justify-center shadow-lg shadow-[#4A3728]/30">
               <GraduationCap size={22} className="text-white" />
             </div>
             <span className="font-heading font-bold text-xl text-text-primary">
@@ -114,7 +114,7 @@ const Login = () => {
                 <label className="text-sm font-semibold text-text-primary">
                   Password
                 </label>
-                <span className="text-xs text-primary-600 cursor-pointer hover:underline">
+                <span className="text-xs text-[#4A3728] cursor-pointer hover:underline">
                   Forgot password?
                 </span>
               </div>
@@ -146,7 +146,7 @@ const Login = () => {
               <input
                 type="checkbox"
                 id="keep-signed-in"
-                className="w-4 h-4 rounded-full border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded-full border-gray-300 text-[#4A3728] focus:ring-[#4A3728]"
               />
               <label
                 htmlFor="keep-signed-in"
@@ -199,7 +199,7 @@ const Login = () => {
             Don't have an account?{" "}
             <Link
               to="/register"
-              className="text-primary-600 font-semibold hover:underline"
+              className="text-[#4A3728] font-semibold hover:underline"
             >
               Register for free
             </Link>

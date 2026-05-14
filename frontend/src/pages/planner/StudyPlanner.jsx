@@ -146,26 +146,17 @@ const StudyPlanner = () => {
   const [dragOverDate, setDragOverDate] = useState(null);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [newTask, setNewTask] = useState({ subjectName: "", topicName: "", durationHours: 1 });
-  const [liveSubjects, setLiveSubjects] = useState([]);
+
+  const subjects = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
 
   useEffect(() => { setWeekDates(getWeekDates(weekStart)); }, [weekStart]);
   useEffect(() => { fetchDailyTasks(); }, [selectedDate]);
 
   useEffect(() => {
-    const fetchLiveSubjects = async () => {
-      try {
-        const { subjectService } = await import('../../services/subjectService');
-        const res = await subjectService.getSubjects();
-        if (res.success) {
-          setLiveSubjects(res.data);
-          if (selectedGenSubjects.length === 0) {
-            setSelectedGenSubjects(res.data.map(s => s.id));
-          }
-        }
-      } catch (err) { console.error("Failed to fetch subjects"); }
-    };
-    if (showGenModal) fetchLiveSubjects();
-  }, [showGenModal]);
+    if (showGenModal && selectedGenSubjects.length === 0) {
+      setSelectedGenSubjects(subjects.map(s => s.id));
+    }
+  }, [showGenModal, subjects]);
 
   const fetchDailyTasks = async () => {
     setLoading(true);
@@ -190,7 +181,7 @@ const StudyPlanner = () => {
     if (!genExamDate) { toast.error("Please set your exam date."); return; }
     if (selectedGenSubjects.length === 0) { toast.error("Please select at least one subject."); return; }
 
-    const subs = liveSubjects.filter((s) => selectedGenSubjects.includes(s.id));
+    const subs = subjects.filter((s) => selectedGenSubjects.includes(s.id));
     const newPlan = createStudySchedule(subs, genExamDate, genHours);
     
     if (Object.keys(newPlan).length === 0) { toast.error("No topics found to schedule."); return; }
@@ -287,7 +278,7 @@ const StudyPlanner = () => {
                 <div>
                   <label className="text-[11px] font-black uppercase tracking-widest text-[#A3A3A3] mb-3 block">Subjects</label>
                   <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-1">
-                    {liveSubjects.map(s => (
+                    {subjects.map(s => (
                       <button 
                         key={s.id} 
                         onClick={() => setSelectedGenSubjects(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
@@ -391,8 +382,8 @@ const StudyPlanner = () => {
                             <div 
                               key={task.id} 
                               draggable
-                              onDragStart={() => setDraggedTask({ ...task, date: dateStr })}
-                              className={`p-3 rounded-lg border bg-white border-[#E6E6E6] shadow-sm cursor-move hover:scale-[1.02] transition-all ${task.status === 'completed' ? 'opacity-50' : ''}`}
+                              onClick={() => navigate("/session", { state: { task: { ...task, date: dateStr }, dateKey: dateStr } })}
+                              className={`p-3 rounded-xl border bg-white border-[#E6E6E6] shadow-sm cursor-pointer hover:scale-[1.02] hover:border-[#4A3728] transition-all ${task.status === 'completed' ? 'opacity-50' : ''}`}
                             >
                               <p className="text-[10px] font-black text-[#A3A3A3] uppercase truncate">{task.subjectName}</p>
                               <p className="text-[12px] font-bold text-[#4A3728] truncate">{task.topicName}</p>
@@ -437,20 +428,21 @@ const StudyPlanner = () => {
                   {dailyTasks.map(task => (
                     <div key={task.id} className="p-5 rounded-xl border border-[#E6E6E6] bg-white hover:border-[#4A3728] transition-all group">
                       <div className="flex justify-between items-start mb-4">
-                        <div>
+                        <div onClick={() => navigate("/session", { state: { task, dateKey: format(selectedDate, "yyyy-MM-dd") } })} className="cursor-pointer">
                           <p className="text-[10px] font-black text-[#A3A3A3] uppercase tracking-widest">{task.subjectName}</p>
-                          <h4 className="text-[15px] font-black text-[#4A3728] tracking-tight">{task.topicName}</h4>
+                          <h4 className="text-[15px] font-black text-[#4A3728] tracking-tight hover:text-[var(--primary)]">{task.topicName}</h4>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2 mb-4">
                         {[
-                          { id: 'video', label: 'Watch', icon: Zap },
-                          { id: 'notes', label: 'Notes', icon: FileText },
-                          { id: 'mcqs', label: 'MCQs', icon: CheckCircle }
+                          { id: 'video', label: 'Watch', icon: Zap, tab: 'overview' },
+                          { id: 'notes', label: 'Notes', icon: FileText, tab: 'notes' },
+                          { id: 'mcqs', label: 'MCQs', icon: CheckCircle, tab: 'stats' }
                         ].map(st => (
                           <button 
                             key={st.id}
-                            className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border bg-gray-50 text-[#6B6B6B] border-gray-100 hover:border-[#4A3728]"
+                            onClick={() => navigate("/session", { state: { task, dateKey: format(selectedDate, "yyyy-MM-dd"), initialTab: st.tab } })}
+                            className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border bg-gray-50 text-[#6B6B6B] border-gray-100 hover:border-[#4A3728] transition-all hover:bg-white shadow-sm"
                           >
                             <st.icon size={10} />
                             <span className="text-[9px] font-black uppercase">{st.label}</span>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Trash2,
@@ -43,6 +44,14 @@ const defaultNotes = [
         question: "Which data structure is better for frequent insertions at the beginning?",
         answer: "Linked List (O(1)) vs Array (O(n))",
       },
+      {
+        id: 7,
+        title: "Recursion & Stack",
+        content: "Recursion uses the system stack to keep track of function calls.",
+        flashcard: true,
+        question: "What happens if a recursive function lacks a base case?",
+        answer: "Stack Overflow (Infinite recursion consumes all stack memory)",
+      },
     ],
   },
   {
@@ -64,6 +73,14 @@ const defaultNotes = [
         flashcard: true,
         question: "What is thrashing in OS?",
         answer: "When the system spends more time paging than executing processes.",
+      },
+      {
+        id: 8,
+        title: "Semaphores",
+        content: "Semaphores are integer variables used for process synchronization.",
+        flashcard: true,
+        question: "What is the difference between Binary and Counting Semaphores?",
+        answer: "Binary (0 or 1) acts as a Mutex; Counting can take any non-negative value.",
       },
     ],
   },
@@ -87,6 +104,36 @@ const defaultNotes = [
         question: "Which protocol is faster for streaming video?",
         answer: "UDP (No handshake or retransmission overhead)",
       },
+      {
+        id: 9,
+        title: "DNS Protocol",
+        content: "Domain Name System translates domain names to IP addresses.",
+        flashcard: true,
+        question: "What port number does DNS typically use?",
+        answer: "Port 53 (usually over UDP)",
+      },
+    ],
+  },
+  {
+    id: 10,
+    subject: "Databases (DBMS)",
+    notes: [
+      {
+        id: 11,
+        title: "ACID Properties",
+        content: "ACID ensures database transactions are processed reliably.",
+        flashcard: true,
+        question: "What does the 'I' stand for in ACID?",
+        answer: "Isolation (Transactions don't interfere with each other)",
+      },
+      {
+        id: 12,
+        title: "Normalization",
+        content: "Normalization reduces data redundancy and improves data integrity.",
+        flashcard: true,
+        question: "What is the primary requirement for 1st Normal Form (1NF)?",
+        answer: "Atomic values (No repeating groups or arrays in a column)",
+      },
     ],
   },
 ];
@@ -101,7 +148,7 @@ const FlashcardModal = ({ notes, subjectName, onClose }) => {
   if (!cards.length) return (
     <div className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-xl border border-[#E6E6E6] p-8 text-center max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-xl font-bold text-[#111111] mb-2">No flashcards yet</h3>
+        <h3 className="text-xl font-bold text-[#4A3728] mb-2">No flashcards yet</h3>
         <p className="text-[13px] text-[#6B6B6B] mb-6 font-medium">Enable flashcard mode on any note to study it here.</p>
         <button onClick={onClose} className="btn-primary w-full">Got it</button>
       </div>
@@ -235,9 +282,33 @@ const FlashcardModal = ({ notes, subjectName, onClose }) => {
 };
 
 const Notes = () => {
+  const navigate = useNavigate();
   const [subjects, setSubjects] = useState(() => {
-    try { const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : defaultNotes; }
-    catch { return defaultNotes; }
+    try { 
+      const s = localStorage.getItem("sp_subjects"); 
+      const localNotes = localStorage.getItem(LS_KEY);
+      
+      if (localNotes) return JSON.parse(localNotes);
+      if (!s) return defaultNotes;
+
+      const parsed = JSON.parse(s);
+      const mapped = parsed.map(sub => ({
+        id: sub.id,
+        subject: sub.name || sub.subject,
+        notes: sub.topics ? sub.topics.map(t => ({
+          id: t.id,
+          title: t.name || t.title,
+          content: t.notes || "",
+          flashcard: !!t.notes,
+          question: t.notes ? `What are the key points of ${t.name || t.title}?` : "",
+          answer: t.notes || ""
+        })).filter(n => n.content) : []
+      }));
+
+      // If mapped subjects have no notes, show default samples for guidance
+      const total = mapped.reduce((a, s) => a + s.notes.length, 0);
+      return total > 0 ? mapped : defaultNotes;
+    } catch { return defaultNotes; }
   });
   const [expanded, setExpanded] = useState(null);
   const [flashcardSubject, setFlashcardSubject] = useState(null);
@@ -248,12 +319,30 @@ const Notes = () => {
   const [editingNote, setEditingNote] = useState(null);
   const [editNote, setEditNote] = useState({});
 
-  const persist = (data) => { setSubjects(data); localStorage.setItem(LS_KEY, JSON.stringify(data)); };
+  const persist = (data) => { 
+    setSubjects(data); 
+    // Also update sp_subjects to keep everything interconnected
+    const originalSubjects = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
+    const updatedGlobal = originalSubjects.map(gs => {
+      const match = data.find(d => d.id === gs.id);
+      if (match) {
+        // We only update notes back to topics here
+        const updatedTopics = (gs.topics || []).map(gt => {
+          const noteMatch = match.notes.find(n => n.id === gt.id);
+          if (noteMatch) return { ...gt, notes: noteMatch.content };
+          return gt;
+        });
+        return { ...gs, topics: updatedTopics };
+      }
+      return gs;
+    });
+    localStorage.setItem("sp_subjects", JSON.stringify(updatedGlobal));
+    window.dispatchEvent(new Event('storage'));
+  };
 
   const addSubject = () => {
-    if (!newSubjectName.trim()) return toast.error("Name required");
-    persist([...subjects, { id: Date.now(), subject: newSubjectName.trim(), notes: [] }]);
-    setNewSubjectName(""); setShowAddSubject(false); toast.success("Subject added");
+    toast.error("Please add new subjects through the Subject Manager page.");
+    navigate("/subjects");
   };
 
   const addNote = (subjectId) => {
@@ -295,41 +384,50 @@ const Notes = () => {
             { label: "Subjects", value: subjects.length, icon: BookOpen },
             { label: "Total Notes", value: totalNotes, icon: FileText },
             { label: "Flashcards", value: totalFlashcards, icon: Zap },
-            { label: "Study Mode", value: "Ready", icon: RotateCcw, onClick: () => setFlashcardSubject("all") },
+            { 
+              label: "Study Mode", 
+              value: totalFlashcards > 0 ? "Ready" : "Inactive", 
+              icon: RotateCcw, 
+              onClick: totalFlashcards > 0 ? () => setFlashcardSubject("all") : null,
+              active: totalFlashcards > 0
+            },
           ].map((s, i) => (
-            <div key={i} className={`card flex items-center gap-4 ${s.onClick ? 'cursor-pointer hover:border-[#111111] transition-all' : ''}`} onClick={s.onClick}>
-              <div className="w-10 h-10 rounded-[8px] bg-[#F1F1F1] flex items-center justify-center shrink-0">
-                <s.icon size={18} className="text-[#111111]" />
+            <div key={i} className={`card flex items-center gap-4 ${s.onClick ? 'cursor-pointer border-[#4A3728] bg-[#FAF9F6] shadow-md hover:scale-105 transition-all' : ''}`} onClick={s.onClick}>
+              <div className={`w-10 h-10 rounded-[8px] flex items-center justify-center shrink-0 ${s.active ? 'bg-[#4A3728] text-white animate-pulse' : 'bg-[#F1F1F1] text-[#111111]'}`}>
+                <s.icon size={18} />
               </div>
               <div>
                 <p className="text-[11px] font-bold text-[#6B6B6B] uppercase tracking-wider">{s.label}</p>
-                <p className="text-[20px] font-bold text-[#111111] leading-none mt-1">{s.value}</p>
+                <p className={`text-[20px] font-bold leading-none mt-1 ${s.active ? 'text-[#4A3728]' : 'text-[#4A3728]'}`}>{s.value}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-between mb-8">
-           <h2 className="text-[20px] font-bold text-[#111111] tracking-tight">Your Curriculum</h2>
-           <button onClick={() => setShowAddSubject(true)} className="btn-primary text-[13px] flex items-center gap-2">
-              <Plus size={16} /> New Subject
-           </button>
-        </div>
-
-        {/* Form */}
-        {showAddSubject && (
-          <div className="card mb-8 border-[#111111] border-2 bg-[#F9FAFB] animate-fade-in">
-             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[14px] font-bold text-[#111111] uppercase tracking-wider">New Subject Group</h3>
-                <button onClick={() => setShowAddSubject(false)}><X size={18} className="text-[#6B6B6B]" /></button>
-             </div>
-             <div className="flex gap-4">
-                <input value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} placeholder="e.g. Theoretical Physics" className="input-field flex-1" />
-                <button onClick={addSubject} className="btn-primary !w-auto !px-8">Create</button>
+        {/* Pro-Tip Banner */}
+        {totalNotes === 0 && (
+          <div className="card mb-10 bg-[var(--primary)] text-white border-none p-8 relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-4 opacity-10"><Lightbulb size={120} /></div>
+             <div className="relative z-10">
+                <h3 className="text-[18px] font-bold mb-2">How it Works</h3>
+                <p className="text-[14px] text-white/70 max-w-xl leading-relaxed">
+                   SmartPrep uses <b>Active Recall</b> to help you study. When you create a note, check the <b>"Create Flashcard"</b> box. Your notes will automatically turn into a study deck you can review in <b>Study Mode</b>.
+                </p>
              </div>
           </div>
         )}
+
+        {/* Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
+           <div className="flex items-center gap-2">
+              {subjects.map(s => (
+                <button key={s.id} onClick={() => setExpanded(expanded === s.id ? null : s.id)} className={`px-4 py-1.5 rounded-[8px] text-[12px] font-bold transition-all hover:scale-105 duration-300 ${expanded === s.id ? "bg-[#4A3728] text-white shadow-lg" : "bg-white border border-[#E6E6E6] text-[#6B6B6B] hover:border-[#4A3728]"}`}>{s.subject}</button>
+              ))}
+           </div>
+           <button onClick={() => navigate("/subjects")} className="btn-secondary text-[13px] flex items-center gap-2 hover:scale-105 transition-transform duration-300">
+             <Plus size={16} /> Manage Subjects
+           </button>
+        </div>
 
         {/* Subject List */}
         <div className="space-y-4">
@@ -338,17 +436,17 @@ const Notes = () => {
             const flashCount = subject.notes.filter(n => n.flashcard).length;
 
             return (
-              <div key={subject.id} className={`card p-0 overflow-hidden border-2 transition-all ${isOpen ? 'border-[#111111]' : 'border-[#E6E6E6]'}`}>
+              <div key={subject.id} className={`card p-0 overflow-hidden border-2 transition-all ${isOpen ? 'border-[#4A3728]' : 'border-[#E6E6E6]'}`}>
                 <div className="px-6 py-5 flex items-center justify-between cursor-pointer group" onClick={() => setExpanded(isOpen ? null : subject.id)}>
                    <div className="flex items-center gap-4">
                       <div className="w-2 h-2 rounded-full bg-[#111111]" />
                       <div>
-                         <h4 className="text-[16px] font-bold text-[#111111]">{subject.subject}</h4>
+                         <h4 className="text-[16px] font-bold text-[#4A3728]">{subject.subject}</h4>
                          <p className="text-[11px] font-bold text-[#6B6B6B] uppercase tracking-wider mt-0.5">{subject.notes.length} Notes · {flashCount} Flashcards</p>
                       </div>
                    </div>
                    <div className="flex items-center gap-4">
-                      <button onClick={(e) => { e.stopPropagation(); setFlashcardSubject(subject.id); }} className="text-[11px] font-bold text-[#111111] border border-[#111111] px-3 py-1 rounded-[4px] hover:bg-[#111111] hover:text-white transition-all uppercase tracking-wider">Review</button>
+                      <button onClick={(e) => { e.stopPropagation(); setFlashcardSubject(subject.id); }} className="text-[11px] font-bold text-[#4A3728] border border-[#4A3728] px-3 py-1 rounded-[4px] hover:bg-[#4A3728] hover:text-white transition-all uppercase tracking-wider">Review</button>
                       {isOpen ? <ChevronUp size={18} className="text-[#111111]" /> : <ChevronDown size={18} className="text-[#A3A3A3] group-hover:text-[#111111]" />}
                    </div>
                 </div>
@@ -358,7 +456,7 @@ const Notes = () => {
                     {subject.notes.map((note) => {
                       const isEditing = editingNote?.noteId === note.id;
                       return (
-                        <div key={note.id} className="bg-white border border-[#E6E6E6] rounded-xl p-6 hover:border-[#111111] transition-all">
+                        <div key={note.id} className="bg-white border border-[#E6E6E6] rounded-xl p-6 hover:border-[#4A3728] transition-all">
                            {isEditing ? (
                              <div className="space-y-4">
                                 <input value={editNote.title} onChange={e => setEditNote({...editNote, title: e.target.value})} className="input-field" placeholder="Title" />
@@ -372,8 +470,8 @@ const Notes = () => {
                              <>
                                <div className="flex justify-between items-start mb-4">
                                   <div className="flex items-center gap-3">
-                                     <h5 className="text-[15px] font-bold text-[#111111]">{note.title}</h5>
-                                     {note.flashcard && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#111111] text-white">Card</span>}
+                                     <h5 className="text-[15px] font-bold text-[#4A3728]">{note.title}</h5>
+                                     {note.flashcard && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#4A3728] text-white">Card</span>}
                                   </div>
                                   <div className="flex items-center gap-1">
                                      <button onClick={() => { setEditingNote({ subjectId: subject.id, noteId: note.id }); setEditNote({...note}); }} className="p-2 text-[#A3A3A3] hover:text-[#111111]"><Edit3 size={16} /></button>
@@ -388,12 +486,12 @@ const Notes = () => {
                     })}
                     
                     {addingNoteTo === subject.id ? (
-                       <div className="bg-white border-2 border-dashed border-[#111111] rounded-xl p-6 space-y-4">
+                       <div className="bg-white border-2 border-dashed border-[#4A3728] rounded-xl p-6 space-y-4">
                           <input value={newNote.title} onChange={e => setNewNote({...newNote, title: e.target.value})} className="input-field" placeholder="Note Title" />
                           <textarea value={newNote.content} onChange={e => setNewNote({...newNote, content: e.target.value})} className="input-field h-32" placeholder="Start writing..." />
                           <div className="flex items-center gap-4 p-4 bg-[#F9FAFB] rounded-[8px]">
                              <input type="checkbox" checked={newNote.flashcard} onChange={e => setNewNote({...newNote, flashcard: e.target.checked})} className="w-4 h-4 accent-[#111111]" />
-                             <span className="text-[13px] font-bold text-[#111111]">Create a flashcard for this note</span>
+                             <span className="text-[13px] font-bold text-[#4A3728]">Create a flashcard for this note</span>
                           </div>
                           {newNote.flashcard && (
                              <div className="space-y-4 pt-2">
@@ -407,7 +505,7 @@ const Notes = () => {
                           </div>
                        </div>
                     ) : (
-                       <button onClick={() => setAddingNoteTo(subject.id)} className="w-full py-4 border-2 border-dashed border-[#E6E6E6] rounded-xl text-[13px] font-bold text-[#6B6B6B] hover:border-[#111111] hover:text-[#111111] transition-all">
+                       <button onClick={() => setAddingNoteTo(subject.id)} className="w-full py-4 border-2 border-dashed border-[#E6E6E6] rounded-xl text-[13px] font-bold text-[#6B6B6B] hover:border-[#4A3728] hover:text-[#4A3728] transition-all">
                           + Add New Note
                        </button>
                     )}

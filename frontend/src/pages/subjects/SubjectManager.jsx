@@ -365,7 +365,7 @@ const SubjectManager = () => {
                     {(subject.units || []).map((unit) => (
                       <div key={unit.id} className="space-y-3">
                         <div className="flex items-center justify-between border-b border-[#E6E6E6] pb-2 mb-4">
-                          <h4 className="text-[14px] font-black text-[#111111] uppercase tracking-wider">{unit.title}</h4>
+                          <h4 className="text-[14px] font-black text-[#4A3728] uppercase tracking-wider">{unit.title}</h4>
                           <button 
                             onClick={() => setAddingTopicTo(unit.id)}
                             className="text-[11px] font-bold text-[#4A3728] hover:underline flex items-center gap-1"
@@ -412,8 +412,8 @@ const SubjectManager = () => {
                     {/* Unit Creation Bar */}
                     <div className="pt-4 flex flex-col gap-4">
                       {showAddUnitTo === subject.id ? (
-                        <div className="bg-white p-6 rounded-xl border-2 border-[#111111] animate-fade-in">
-                           <h5 className="text-[12px] font-bold uppercase tracking-widest text-[#111111] mb-4">New Unit</h5>
+                        <div className="bg-white p-6 rounded-xl border-2 border-[#4A3728] animate-fade-in">
+                           <h5 className="text-[12px] font-bold uppercase tracking-widest text-[#4A3728] mb-4">New Unit</h5>
                            <input 
                              className="input-field mb-4" 
                              placeholder="Unit Title (e.g. Unit 1: Fundamentals)" 
@@ -428,7 +428,7 @@ const SubjectManager = () => {
                       ) : (
                         <button 
                           onClick={() => setShowAddUnitTo(subject.id)}
-                          className="w-full py-3 bg-[#111111] text-white rounded-xl text-[12px] font-bold hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                          className="w-full py-3 bg-[#4A3728] text-white rounded-xl text-[12px] font-bold hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                         >
                           <Plus size={16} /> Create New Unit
                         </button>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { useSidebarStore } from "../store/useSidebarStore";
@@ -41,6 +41,22 @@ const SidebarContent = ({ collapsed, onClose }) => {
   const location  = useLocation();
   const { user, logout } = useAuthStore();
   const avatarLetter = user?.name?.charAt(0)?.toUpperCase() || "S";
+  
+  const [masteryPercent, setMasteryPercent] = useState(0);
+
+  const calculateMastery = useCallback(() => {
+    const subjects = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
+    const totalTopics = subjects.reduce((sum, s) => sum + (s.topics ? s.topics.length : 0), 0);
+    const completedTopics = subjects.reduce((sum, s) => sum + (s.topics ? s.topics.filter(t => t.status === "COMPLETED" || t.done).length : 0), 0);
+    const percent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+    setMasteryPercent(percent);
+  }, []);
+
+  useEffect(() => {
+    calculateMastery();
+    window.addEventListener('storage', calculateMastery);
+    return () => window.removeEventListener('storage', calculateMastery);
+  }, [calculateMastery]);
 
   const handleLogout = () => {
     logout();
@@ -77,11 +93,11 @@ const SidebarContent = ({ collapsed, onClose }) => {
               title={collapsed ? item.label : ""}
               onClick={onClose}
               className={[
-                "relative flex items-center gap-3 rounded-[8px] transition-all duration-300 group hover:scale-105",
-                collapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2 w-full",
+                "relative flex items-center gap-3 rounded-[12px] transition-all duration-300 group hover:translate-x-1",
+                collapsed ? "justify-center w-12 h-12 mx-auto mb-1" : "px-4 py-2.5 w-full",
                 isActive
-                  ? "bg-[#F1F1F1] text-[#4A3728]"
-                  : "text-[#6B6B6B] hover:bg-gray-50 hover:text-[#4A3728]",
+                  ? "bg-[#4A3728] text-white shadow-lg shadow-[#4A3728]/20"
+                  : "text-[#6B6B6B] hover:bg-[#FAF9F6] hover:text-[#4A3728]",
               ].join(" ")}
             >
               <item.icon size={18} strokeWidth={isActive ? 2.2 : 1.8} className="shrink-0" />
@@ -105,9 +121,9 @@ const SidebarContent = ({ collapsed, onClose }) => {
           title={collapsed ? "Settings" : ""}
           onClick={onClose}
           className={[
-            "relative flex items-center gap-3 rounded-[8px] transition-all duration-300 group hover:scale-105",
-            collapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2 w-full",
-            location.pathname === "/settings" ? "bg-[#F1F1F1] text-[#4A3728]" : "text-[#6B6B6B] hover:bg-gray-50 hover:text-[#4A3728]",
+            "relative flex items-center gap-3 rounded-[12px] transition-all duration-300 group hover:translate-x-1",
+            collapsed ? "justify-center w-12 h-12 mx-auto" : "px-4 py-2.5 w-full",
+            location.pathname === "/settings" ? "bg-[#4A3728] text-white shadow-lg shadow-[#4A3728]/20" : "text-[#6B6B6B] hover:bg-[#FAF9F6] hover:text-[#4A3728]",
           ].join(" ")}
         >
           <Settings size={18} strokeWidth={location.pathname === "/settings" ? 2.2 : 1.8} className="shrink-0" />
@@ -124,15 +140,25 @@ const SidebarContent = ({ collapsed, onClose }) => {
         </button>
       </div>
 
+        <div className="px-6 py-4 border-t border-[#E6E6E6]">
+           <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-black text-[#A3A3A3] uppercase tracking-widest">Global Mastery</span>
+              <span className="text-[10px] font-bold text-[#D4AF37]">{masteryPercent}%</span>
+           </div>
+           <div className="w-full h-[3px] bg-[#F1F1F1] rounded-full overflow-hidden">
+              <div className="h-full bg-[#D4AF37] transition-all duration-1000" style={{ width: `${masteryPercent}%` }} />
+           </div>
+        </div>
+
       {/* ── User Avatar ── */}
       {!collapsed && (
-        <div className="px-6 py-4 flex items-center gap-3 border-t border-[#E6E6E6]">
-          <div className="w-8 h-8 rounded-full bg-[#F1F1F1] flex items-center justify-center text-[#4A3728] text-[12px] font-bold border border-[#E6E6E6]">
+        <div className="px-6 py-5 flex items-center gap-3 border-t border-[#E6E6E6] bg-[#FAF9F6]/50">
+          <div className="w-9 h-9 rounded-xl bg-[#4A3728] flex items-center justify-center text-white text-[13px] font-bold shadow-md border border-[#4A3728]">
             {avatarLetter}
           </div>
           <div className="min-w-0">
-            <p className="text-[#4A3728] text-[12px] font-bold truncate">{user?.name || "Student"}</p>
-            <p className="text-[#6B6B6B] text-[10px] truncate uppercase tracking-wider font-bold">Free Plan</p>
+            <p className="text-[#4A3728] text-[13px] font-bold truncate tracking-tight">{user?.name || "Student"}</p>
+            <p className="text-[#D4AF37] text-[9px] truncate uppercase tracking-[0.1em] font-black">Elite Member</p>
           </div>
         </div>
       )}

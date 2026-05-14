@@ -111,7 +111,7 @@ export default function Timetable() {
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-[24px] font-bold text-[#111111] tracking-tight">Weekly Schedule</h1>
+            <h1 className="text-[24px] font-bold text-[#4A3728] tracking-tight">Weekly Schedule</h1>
             <p className="text-[12px] font-bold text-[#6B6B6B] uppercase tracking-wider mt-1">
               {slots.length} Slots · {totalHoursPerWeek.toFixed(1)}h Total / Week
             </p>
@@ -127,8 +127,8 @@ export default function Timetable() {
             {/* Headers */}
             {DAYS.map((d) => (
               <div key={d.iso} className={`p-4 text-center border-b border-r border-[#E6E6E6] last:border-r-0 ${d.iso === todayIso ? "bg-[#F9FAFB]" : "bg-white"}`}>
-                <p className={`text-[11px] font-bold uppercase tracking-widest ${d.iso === todayIso ? "text-[#111111]" : "text-[#6B6B6B]"}`}>{d.short}</p>
-                {d.iso === todayIso && <div className="w-1 h-1 rounded-full bg-[#111111] mx-auto mt-2" />}
+                <p className={`text-[11px] font-bold uppercase tracking-widest ${d.iso === todayIso ? "text-[#4A3728]" : "text-[#6B6B6B]"}`}>{d.short}</p>
+                {d.iso === todayIso && <div className="w-1 h-1 rounded-full bg-[#4A3728] mx-auto mt-2" />}
               </div>
             ))}
 
@@ -138,9 +138,9 @@ export default function Timetable() {
                 {slotsByDay[d.iso].map((slot) => (
                   <div
                     key={slot.id}
-                    className="relative group rounded-[8px] p-4 border border-[#E6E6E6] bg-white transition-all hover:border-[#111111] hover:shadow-md"
+                    className="relative group rounded-[8px] p-4 border border-[#E6E6E6] bg-white transition-all hover:border-[#4A3728] hover:shadow-md"
                   >
-                    <p className="text-[13px] font-bold text-[#111111] truncate">{slot.subjectName}</p>
+                    <p className="text-[13px] font-bold text-[#4A3728] truncate">{slot.subjectName}</p>
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#6B6B6B] uppercase tracking-tighter mt-2">
                       <Clock size={12} /> {formatTime(slot.startTime)} — {formatTime(slot.endTime)}
                     </div>
@@ -152,7 +152,7 @@ export default function Timetable() {
                   </div>
                 ))}
                 
-                <button onClick={() => { setForm(f => ({ ...f, dayOfWeek: d.iso })); setShowModal(true); }} className="w-full py-3 border border-dashed border-[#E6E6E6] rounded-[8px] text-[11px] font-bold text-[#6B6B6B] hover:text-[#111111] hover:border-[#111111] transition-all">
+                <button onClick={() => { setForm(f => ({ ...f, dayOfWeek: d.iso })); setShowModal(true); }} className="w-full py-3 border border-dashed border-[#E6E6E6] rounded-[8px] text-[11px] font-bold text-[#6B6B6B] hover:text-[#4A3728] hover:border-[#4A3728] transition-all">
                   + Add
                 </button>
               </div>
@@ -164,7 +164,7 @@ export default function Timetable() {
         {!loading && slots.length === 0 && (
           <div className="text-center py-20">
             <Calendar size={48} className="text-[#E6E6E6] mx-auto mb-6" />
-            <h3 className="text-[18px] font-bold text-[#111111]">Plan your week</h3>
+            <h3 className="text-[18px] font-bold text-[#4A3728]">Plan your week</h3>
             <p className="text-[14px] text-[#6B6B6B] mt-2 max-w-md mx-auto">Build a consistent routine by adding your fixed study blocks here.</p>
           </div>
         )}
@@ -175,13 +175,13 @@ export default function Timetable() {
         <div className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl border border-[#E6E6E6] shadow-2xl w-full max-w-md p-8 animate-fade-in">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-xl font-bold text-[#111111] tracking-tight">Add Time Slot</h2>
+              <h2 className="text-xl font-bold text-[#4A3728] tracking-tight">Add Time Slot</h2>
               <button onClick={() => setShowModal(false)} className="text-[#6B6B6B] hover:text-[#111111]"><X size={20} /></button>
             </div>
 
             <div className="space-y-6">
               <div>
-                <label className="text-[12px] font-bold text-[#111111] uppercase tracking-wider mb-2 block">Day</label>
+                <label className="text-[12px] font-bold text-[#4A3728] uppercase tracking-wider mb-2 block">Day</label>
                 <select value={form.dayOfWeek} onChange={e => setForm(f => ({ ...f, dayOfWeek: e.target.value }))} className="input-field">
                   {DAYS.map(d => <option key={d.iso} value={d.iso}>{d.label}</option>)}
                 </select>
@@ -189,17 +189,17 @@ export default function Timetable() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[12px] font-bold text-[#111111] uppercase tracking-wider mb-2 block">Start</label>
+                  <label className="text-[12px] font-bold text-[#4A3728] uppercase tracking-wider mb-2 block">Start</label>
                   <input type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} className="input-field" />
                 </div>
                 <div>
-                  <label className="text-[12px] font-bold text-[#111111] uppercase tracking-wider mb-2 block">End</label>
+                  <label className="text-[12px] font-bold text-[#4A3728] uppercase tracking-wider mb-2 block">End</label>
                   <input type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} className="input-field" />
                 </div>
               </div>
 
               <div>
-                <label className="text-[12px] font-bold text-[#111111] uppercase tracking-wider mb-2 block">Subject</label>
+                <label className="text-[12px] font-bold text-[#4A3728] uppercase tracking-wider mb-2 block">Subject</label>
                 <input type="text" value={form.subjectName} onChange={e => setForm(f => ({ ...f, subjectName: e.target.value }))} placeholder="e.g. Mathematics" className="input-field" />
               </div>
 

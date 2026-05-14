@@ -115,10 +115,8 @@ public class TaskController {
             @PathVariable UUID id,
             @RequestBody Map<String, Object> body) {
 
-        CustomTask task = taskRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-        if (!task.getUser().getEmail().equals(auth.getName()))
-            return ResponseEntity.status(403).body(ApiResponse.error("Access denied"));
+        CustomTask task = taskRepo.findByIdAndUserEmail(id, auth.getName())
+                .orElseThrow(() -> new RuntimeException("Task not found or access denied"));
 
         if (body.containsKey("title"))        task.setTitle(str(body, "title"));
         if (body.containsKey("subjectName"))  task.setSubjectName(str(body, "subjectName"));
@@ -140,9 +138,8 @@ public class TaskController {
     public ResponseEntity<ApiResponse<Void>> deleteTask(
             Authentication auth, @PathVariable UUID id) {
 
-        CustomTask task = taskRepo.findById(id).orElseThrow(() -> new RuntimeException("Not found"));
-        if (!task.getUser().getEmail().equals(auth.getName()))
-            return ResponseEntity.status(403).body(ApiResponse.error("Access denied"));
+        CustomTask task = taskRepo.findByIdAndUserEmail(id, auth.getName())
+                .orElseThrow(() -> new RuntimeException("Task not found or access denied"));
         taskRepo.delete(task);
         return ResponseEntity.ok(ApiResponse.success("Task deleted", null));
     }

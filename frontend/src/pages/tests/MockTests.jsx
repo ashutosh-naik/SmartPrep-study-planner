@@ -9,7 +9,9 @@ import {
   Lock,
   ArrowRight,
   ChevronDown,
-  Layout
+  Layout,
+  BookOpen,
+  Zap
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import AnimatedPage from "../../components/AnimatedPage";
@@ -32,9 +34,50 @@ const MockTests = () => {
           testService.getAllTests(),
           testService.getTestSummary(),
         ]);
-        setTests(testsRes.data || []);
-        setSummary(summaryRes.data || summary);
-      } catch { /* keep defaults */ }
+        
+        const localSubs = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
+        const dynamicTests = testsRes.data && testsRes.data.length > 0 
+          ? testsRes.data 
+          : localSubs.map((s, idx) => {
+              const difficulty = s.difficulty || "Medium";
+              return {
+                id: `mock-${idx}`,
+                title: `${s.name || s.subject} Mastery Test`,
+                subjectName: s.name || s.subject,
+                difficulty: difficulty,
+                totalQuestions: 25,
+                durationMinutes: difficulty === "Hard" ? 50 : 40,
+                attempted: false,
+                isLocked: false
+              };
+            });
+
+        setTests(dynamicTests);
+        setSummary(summaryRes.data || { 
+          total: dynamicTests.length, 
+          completed: dynamicTests.filter(t => t.attempted).length, 
+          avgScore: 0, 
+          timeSpent: 0 
+        });
+      } catch { 
+        // Fallback to purely local if service fails
+        const localSubs = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
+        const fallback = localSubs.map((s, idx) => {
+          const difficulty = s.difficulty || "Medium";
+          return {
+            id: `mock-${idx}`,
+            title: `${s.name || s.subject} Mastery Test`,
+            subjectName: s.name || s.subject,
+            difficulty: difficulty,
+            totalQuestions: 25,
+            durationMinutes: difficulty === "Hard" ? 50 : 40,
+            attempted: false,
+            isLocked: false
+          };
+        });
+        setTests(fallback);
+        setSummary({ total: fallback.length, completed: 0, avgScore: 0, timeSpent: 0 });
+      }
       finally { setLoading(false); }
     };
     fetchTests();
@@ -56,7 +99,7 @@ const MockTests = () => {
     <AnimatedPage>
       <Navbar title="Mock Assessments" subtitle="Validate your knowledge with timed simulations" />
       
-      <div className="p-6 lg:p-10 animate-fade-in max-w-[1400px] mx-auto">
+      <div className="p-6 lg:p-10 pb-20 animate-fade-in max-w-[1400px] mx-auto">
         
         {/* Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
@@ -77,7 +120,7 @@ const MockTests = () => {
         <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
            <div className="flex items-center gap-2">
               {subjects.map(s => (
-                <button key={s} onClick={() => setActiveTab(s)} className={`px-4 py-1.5 rounded-[8px] text-[12px] font-bold transition-all ${activeTab === s ? "bg-[#111111] text-white" : "bg-white border border-[#E6E6E6] text-[#6B6B6B]"}`}>{s}</button>
+                <button key={s} onClick={() => setActiveTab(s)} className={`px-4 py-1.5 rounded-[8px] text-[12px] font-bold transition-all ${activeTab === s ? "bg-[#4A3728] text-white" : "bg-white border border-[#E6E6E6] text-[#6B6B6B]"}`}>{s}</button>
               ))}
            </div>
            <p className="text-[12px] font-bold text-[#6B6B6B] uppercase tracking-wider">{allFiltered.length} assessments available</p>
@@ -128,8 +171,8 @@ const MockTests = () => {
                       <div className="h-full bg-green-500" style={{ width: `${test.score}%` }} />
                     </div>
                   )}
-                  <button onClick={() => navigate(`/tests/${test.id}`)} disabled={test.isLocked} className={`btn-primary w-full text-[13px] flex items-center justify-center gap-2 ${test.isLocked ? '!bg-[#F1F1F1] !text-[#A3A3A3] !border-[#E6E6E6] cursor-not-allowed' : 'hover:scale-105'} transition-all duration-300`}>
-                    {test.attempted ? 'Retake Assessment' : 'Start Simulation'} <ArrowRight size={16} />
+                  <button onClick={() => navigate(`/tests/${test.id}`, { state: { test } })} disabled={test.isLocked} className={`btn-primary w-full text-[13px] flex items-center justify-center gap-2 ${test.isLocked ? '!bg-[#F1F1F1] !text-[#A3A3A3] !border-[#E6E6E6] cursor-not-allowed' : 'hover:scale-105'} transition-all duration-300`}>
+                    {test.attempted ? 'Retake Test' : 'Start Test'} <ArrowRight size={16} />
                   </button>
                 </div>
               </div>
@@ -146,16 +189,50 @@ const MockTests = () => {
         )}
 
         {/* Global CTA */}
-        <div className="mt-12 card bg-[#4A3728] text-white p-8 hover:scale-[1.01] transition-transform duration-500">
-           <div className="flex flex-wrap items-center justify-between gap-6">
-              <div>
-                 <h3 className="text-[18px] font-bold mb-2 tracking-tight">Full Mock Examination</h3>
-                 <p className="text-[13px] text-white/60 font-medium leading-relaxed">Simulate a real-world exam environment with 120 questions across all subjects.</p>
-              </div>
-              <button onClick={() => navigate("/tests/demo")} className="px-6 py-2.5 bg-white text-[#4A3728] rounded-[8px] text-[13px] font-bold hover:bg-[#F1F1F1] transition-all duration-300 hover:scale-110">
-                 Launch Exam
-              </button>
-           </div>
+        <div className="card bg-[#4A3728] text-white border-none p-10 relative overflow-hidden group mt-16">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
+            <BookOpen size={160} />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+               <span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm">Comprehensive</span>
+               <span className="px-3 py-1 bg-amber-500 rounded-full text-[10px] font-bold uppercase tracking-widest text-black">New</span>
+            </div>
+            <h2 className="text-[32px] font-bold mb-4 tracking-tight">Full Mock Examination</h2>
+            <p className="text-white/70 text-[15px] max-w-2xl mb-10 leading-relaxed font-medium">
+              Simulate a real-world board exam environment. This comprehensive test features <b>50 mixed questions</b> from Data Structures, OS, Networking, and DBMS, including <b>hands-on coding challenges</b>.
+            </p>
+            <div className="flex flex-wrap items-center gap-10 mb-10 text-white/80">
+               <div className="flex items-center gap-2">
+                  <FileText size={20} className="text-amber-500" />
+                  <span className="text-[14px] font-bold">50 Questions</span>
+               </div>
+               <div className="flex items-center gap-2">
+                  <Clock size={20} className="text-amber-500" />
+                  <span className="text-[14px] font-bold">90 Minutes</span>
+               </div>
+               <div className="flex items-center gap-2">
+                  <Zap size={20} className="text-amber-500" />
+                  <span className="text-[14px] font-bold">Coding Section Included</span>
+               </div>
+            </div>
+            <button 
+              onClick={() => navigate('/tests/full-mock', { 
+                state: { 
+                  test: { 
+                    id: 'full-mock',
+                    title: 'Full Mock Examination (2025)',
+                    subjectName: 'Full Mock',
+                    totalQuestions: 50,
+                    durationMinutes: 90
+                  } 
+                } 
+              })} 
+              className="bg-white text-[#4A3728] px-10 py-4 rounded-[12px] text-[14px] font-bold hover:bg-amber-500 hover:text-black transition-all hover:scale-105 shadow-xl uppercase tracking-widest"
+            >
+              Launch Exam
+            </button>
+          </div>
         </div>
 
       </div>

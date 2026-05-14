@@ -14,33 +14,59 @@ import {
   Shield,
   TrendingUp,
   ChevronRight,
+  Maximize2,
+  Minimize2,
+  Save,
 } from "lucide-react";
 import AnimatedPage from "../../components/AnimatedPage";
 import toast from "react-hot-toast";
 
 const TOPIC_PLAYLIST_MAP = {
-  "arrays": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU", 
-  "linked list": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU",
-  "stacks": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU",
-  "queues": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU", 
-  "trees": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU",
-  "graphs": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU", 
-  "sorting": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU",
-  "searching": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU", 
-  "dynamic programming": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU",
-  "process": "PLBlnK6fEyqRiVhbXDGLXDk_OQAeuVcp2O", 
-  "network": "PLBlnK6fEyqRjH9DSJbS7Y_4oMCU7k-qZz",
-  "sql": "PLxCzCOWd7aiFAN6I8CuViBuCdJgiOkT2Y", 
+  // Data Structures & Algorithms
+  "data structures": "PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+  "algorithms": "PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+  "dsa": "PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+  "arrays": "PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+  "linked list": "PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+  "stacks": "PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+  "trees": "PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+  "graphs": "PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz",
+
+  // Operating Systems
+  "operating systems": "PLxCzCOWd7aiGz9donHRrE9I3Mwn6XdP8p",
+  "os": "PLxCzCOWd7aiGz9donHRrE9I3Mwn6XdP8p",
+
+  // Database Management System
+  "database management": "PLxCzCOWd7aiFAN6I8CuViBuCdJgiOkT2Y",
+  "dbms": "PLxCzCOWd7aiFAN6I8CuViBuCdJgiOkT2Y",
+  "database": "PLxCzCOWd7aiFAN6I8CuViBuCdJgiOkT2Y",
+  "sql": "PLxCzCOWd7aiFAN6I8CuViBuCdJgiOkT2Y",
+
+  // Computer Networks
+  "computer networks": "PLxCzCOWd7aiGFBD2-2joCpWOLUrDLvVV_",
+  "cn": "PLxCzCOWd7aiGFBD2-2joCpWOLUrDLvVV_",
+  "networking": "PLxCzCOWd7aiGFBD2-2joCpWOLUrDLvVV_",
+
+  // Fallbacks for other common CS topics
+  "java": "PLu0W_Vlzh9ZglpW0xSgEw95P6L8t8yB2G",
   "python": "PLGjplmpt1Vt3pIDr8xNNMC4rP06j2yVhF",
-  "operating systems": "PLBlnK6fEyqRiVhbXDGLXDk_OQAeuVcp2O",
-  "data structures": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU",
-  "algorithms": "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU"
+  "web development": "PLu0W_Vlzh9ZglpW0xSgEw95P6L8t8yB2G",
 };
 
 function findPlaylist(topic = "", subject = "") {
-  const t = topic.toLowerCase(); const s = subject.toLowerCase();
-  for (const [k, v] of Object.entries(TOPIC_PLAYLIST_MAP)) if (t.includes(k) || s.includes(k)) return v;
-  return "PLdo5W4Nhv31bbKJzrsKfMpo_grxuLl8LU";
+  const t = (topic || "").toLowerCase();
+  const s = (subject || "").toLowerCase();
+  
+  // 1. Check for direct subject matches first (highest priority)
+  const subjectMatch = Object.entries(TOPIC_PLAYLIST_MAP).find(([k]) => s.includes(k));
+  if (subjectMatch) return subjectMatch[1];
+
+  // 2. Check for topic name matches
+  const topicMatch = Object.entries(TOPIC_PLAYLIST_MAP).find(([k]) => t.includes(k));
+  if (topicMatch) return topicMatch[1];
+
+  // 3. Global default (DSA)
+  return "PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz";
 }
 
 function fmtTime(s) {
@@ -51,10 +77,46 @@ function fmtTime(s) {
 const THRESHOLD = 0.9;
 
 function saveProgress(date, id, patch) {
+  // 1. Update Study Plan
   const plan = JSON.parse(localStorage.getItem("sp_study_plan") || "{}");
-  if (!plan[date]) return;
-  plan[date] = plan[date].map(t => t.id === id ? { ...t, ...patch } : t);
-  localStorage.setItem("sp_study_plan", JSON.stringify(plan));
+  let targetTask = null;
+  if (plan[date]) {
+    plan[date] = plan[date].map(t => {
+      if (t.id === id) {
+        targetTask = { ...t, ...patch };
+        return targetTask;
+      }
+      return t;
+    });
+    localStorage.setItem("sp_study_plan", JSON.stringify(plan));
+  }
+
+  // 2. Update Subjects (Interconnectivity)
+  if (targetTask) {
+    const subjects = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
+    const updatedSubjects = subjects.map(s => {
+      if (s.name === targetTask.subjectName) {
+        const updatedTopics = (s.topics || []).map(topic => {
+          if (topic.name === targetTask.topicName || topic.title === targetTask.topicName) {
+            return { 
+              ...topic, 
+              status: patch.status === "completed" ? "COMPLETED" : topic.status,
+              done: patch.status === "completed" ? true : topic.done,
+              notes: patch.notes || topic.notes,
+              watchedSeconds: patch.watchedSeconds || topic.watchedSeconds
+            };
+          }
+          return topic;
+        });
+        return { ...s, topics: updatedTopics };
+      }
+      return s;
+    });
+    localStorage.setItem("sp_subjects", JSON.stringify(updatedSubjects));
+    
+    // Trigger storage event for other tabs/components
+    window.dispatchEvent(new Event('storage'));
+  }
 }
 
 export default function StudySession() {
@@ -64,11 +126,13 @@ export default function StudySession() {
   const [dateKey] = useState(state?.dateKey);
   const [dayTasks, setDayTasks] = useState([]);
   const [userNote, setUserNote] = useState("");
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(state?.initialTab || "overview");
   const [showCelebration, setShowCelebration] = useState(false);
   const [watchedSec, setWatchedSec] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const playerRef = useRef(null);
   const prevTimeRef = useRef(null);
@@ -84,9 +148,27 @@ export default function StudySession() {
     if (plan[dateKey]) {
       setDayTasks(plan[dateKey]);
       const s = plan[dateKey].find(t => t.id === task.id);
-      if (s) { setWatchedSec(s.watchedSeconds || 0); setIsCompleted(s.status === "completed"); completionRef.current = s.status === "completed"; }
+      if (s) { 
+        setWatchedSec(s.watchedSeconds || 0); 
+        setIsCompleted(s.status === "completed"); 
+        completionRef.current = s.status === "completed"; 
+        setUserNote(s.notes || "");
+      }
     }
   }, [task, dateKey]);
+
+  // Auto-save logic
+  useEffect(() => {
+    if (!task || !userNote) return;
+    
+    setIsSaving(true);
+    const timer = setTimeout(() => {
+      saveProgress(dateKey, task.id, { notes: userNote });
+      setIsSaving(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [userNote, task, dateKey]);
 
   useEffect(() => {
     if (window.YT && window.YT.Player) { initPlayer(); return; }
@@ -154,6 +236,13 @@ export default function StudySession() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+             <button 
+               onClick={() => setIsFocusMode(!isFocusMode)}
+               className={`p-2 rounded-lg transition-all ${isFocusMode ? 'bg-[#4A3728] text-white' : 'bg-gray-50 text-gray-400 hover:text-[#4A3728]'}`}
+               title="Toggle Focus Mode"
+             >
+                {isFocusMode ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+             </button>
              <div className="px-3 py-1.5 bg-[#F9FAFB] border border-[#E6E6E6] rounded-[6px] text-[12px] font-bold font-mono text-[#4A3728]">
                 {fmtTime(watchedSec)} / <span className="text-[#A3A3A3]">{fmtTime(requiredSec)}</span>
              </div>
@@ -193,7 +282,7 @@ export default function StudySession() {
 
             <div className="p-10 max-w-4xl">
                <div className="flex border-b border-[#E6E6E6] gap-10 mb-8">
-                  {['overview', 'notes', 'stats'].map(t => (
+                  {['overview', 'notes', 'mcqs', 'pyqs', 'stats'].map(t => (
                     <button key={t} onClick={() => setActiveTab(t)} className={`pb-4 text-[13px] font-bold uppercase tracking-widest transition-all ${activeTab === t ? 'border-b-2 border-[#4A3728] text-[#4A3728]' : 'text-[#A3A3A3] hover:text-[#4A3728]'}`}>
                        {t}
                     </button>
@@ -220,9 +309,45 @@ export default function StudySession() {
                )}
 
                {activeTab === 'notes' && (
-                 <div className="animate-fade-in">
-                    <textarea value={userNote} onChange={e => setUserNote(e.target.value)} placeholder="Capture key concepts and formulas..." className="input-field h-48 resize-none mb-4" />
-                    <button onClick={() => toast.success("Note saved to study bank")} className="btn-primary !w-auto px-8">Save Observation</button>
+                 <div className="animate-fade-in relative">
+                    <textarea 
+                      value={userNote} 
+                      onChange={e => setUserNote(e.target.value)} 
+                      placeholder="Capture key concepts and formulas..." 
+                      className="input-field h-64 resize-none mb-4 p-6 text-[15px] leading-relaxed border-2 focus:border-[#4A3728]" 
+                    />
+                    <div className="absolute top-4 right-4 flex items-center gap-2">
+                       {isSaving ? (
+                         <span className="text-[10px] font-bold text-[#A3A3A3] uppercase tracking-widest animate-pulse">Saving...</span>
+                       ) : (
+                         <span className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest flex items-center gap-1">
+                           <Save size={10} /> Saved
+                         </span>
+                       )}
+                    </div>
+                    <button onClick={() => toast.success("Draft saved to study bank")} className="btn-primary !w-auto px-8">Force Save</button>
+                 </div>
+               )}
+
+               {activeTab === 'mcqs' && (
+                 <div className="animate-fade-in text-center py-12">
+                    <div className="w-16 h-16 bg-[#F9FAFB] rounded-full flex items-center justify-center mx-auto mb-6">
+                       <HelpCircle size={32} className="text-[#4A3728]" />
+                    </div>
+                    <h3 className="text-[18px] font-bold text-[#4A3728]">Topic-Wise MCQ Practice</h3>
+                    <p className="text-[14px] text-[#6B6B6B] mt-2 mb-8 max-w-sm mx-auto">Validate your understanding of <b>{task.topicName}</b> with curated interactive questions.</p>
+                    <button onClick={() => navigate("/tests", { state: { filter: task.subjectName } })} className="btn-primary !w-auto px-10">Start Practice</button>
+                 </div>
+               )}
+
+               {activeTab === 'pyqs' && (
+                 <div className="animate-fade-in text-center py-12">
+                    <div className="w-16 h-16 bg-[#F9FAFB] rounded-full flex items-center justify-center mx-auto mb-6">
+                       <GraduationCap size={32} className="text-[#4A3728]" />
+                    </div>
+                    <h3 className="text-[18px] font-bold text-[#4A3728]">PYQ Archive: {task.subjectName}</h3>
+                    <p className="text-[14px] text-[#6B6B6B] mt-2 mb-8 max-w-sm mx-auto">Review questions from the last 10 years of exams relating to this specific module.</p>
+                    <button onClick={() => navigate("/pyqs", { state: { subject: task.subjectName } })} className="btn-primary !w-auto px-10">Access Library</button>
                  </div>
                )}
 
@@ -246,21 +371,23 @@ export default function StudySession() {
           </div>
 
           {/* Sidebar */}
-          <div className="w-80 bg-white border-l border-[#E6E6E6] p-6 hidden lg:flex flex-col">
-             <h3 className="text-[14px] font-bold text-[#4A3728] uppercase tracking-widest mb-6">Today's Curriculum</h3>
-             <div className="space-y-3 flex-1 overflow-y-auto">
-                {dayTasks.map(t => (
-                  <div key={t.id} className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] duration-300 ${t.id === task.id ? 'border-[#4A3728] bg-[#F9FAFB] shadow-md' : 'border-[#E6E6E6] hover:border-[#4A3728]'}`} onClick={() => setTask(t)}>
-                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-bold text-[#6B6B6B] uppercase">{t.subjectName}</span>
-                        {t.status === 'completed' && <CheckCircle2 size={12} className="text-[#4A3728]" />}
-                     </div>
-                     <p className="text-[13px] font-bold text-[#4A3728]">{t.topicName || t.title}</p>
-                     <p className="text-[11px] text-[#A3A3A3] mt-1 font-medium">{t.durationHours} hours</p>
-                  </div>
-                ))}
-             </div>
-          </div>
+          {!isFocusMode && (
+            <div className="w-80 bg-white border-l border-[#E6E6E6] p-6 hidden lg:flex flex-col animate-slide-in-right">
+               <h3 className="text-[14px] font-bold text-[#4A3728] uppercase tracking-widest mb-6">Today's Curriculum</h3>
+               <div className="space-y-3 flex-1 overflow-y-auto">
+                  {dayTasks.map(t => (
+                    <div key={t.id} className={`p-4 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] duration-300 ${t.id === task.id ? 'border-[#4A3728] bg-[#F9FAFB] shadow-md' : 'border-[#E6E6E6] hover:border-[#4A3728]'}`} onClick={() => setTask(t)}>
+                       <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-[#6B6B6B] uppercase">{t.subjectName}</span>
+                          {t.status === 'completed' && <CheckCircle2 size={12} className="text-[#4A3728]" />}
+                       </div>
+                       <p className="text-[13px] font-bold text-[#4A3728]">{t.topicName || t.title}</p>
+                       <p className="text-[11px] text-[#A3A3A3] mt-1 font-medium">{t.durationHours} hours</p>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          )}
 
         </div>
 

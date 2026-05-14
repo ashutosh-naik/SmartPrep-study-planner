@@ -88,10 +88,10 @@ const PomodoroTimer = ({ taskName = "Study Session", onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-md p-4">
-      <div className="card !p-0 w-full max-w-sm overflow-hidden border-[#111111] border-2 shadow-2xl animate-fade-in">
+      <div className="card !p-0 w-full max-w-sm overflow-hidden border-[#4A3728] border-2 shadow-2xl animate-fade-in">
         
         {/* Header */}
-        <div className="bg-[#111111] p-6 text-white flex items-center justify-between">
+        <div className="bg-[#4A3728] p-6 text-white flex items-center justify-between">
            <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#A3A3A3]">Focus Engine</p>
               <h2 className="text-[14px] font-bold truncate mt-1">{taskName}</h2>
@@ -106,7 +106,7 @@ const PomodoroTimer = ({ taskName = "Study Session", onClose }) => {
            {/* Modes */}
            <div className="grid grid-cols-4 gap-2 mb-10">
               {Object.entries(MODES).map(([k, m]) => (
-                <button key={k} onClick={() => switchMode(k)} className={`py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${mode === k ? 'bg-[#111111] text-white shadow-lg' : 'bg-[#F1F1F1] text-[#6B6B6B] hover:text-[#111111]'}`}>
+                <button key={k} onClick={() => switchMode(k)} className={`py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${mode === k ? 'bg-[#4A3728] text-white shadow-lg' : 'bg-[#F1F1F1] text-[#6B6B6B] hover:text-[#4A3728]'}`}>
                    {m.label.split(' ')[1] || m.label.split(' ')[0]}
                 </button>
               ))}
@@ -117,10 +117,10 @@ const PomodoroTimer = ({ taskName = "Study Session", onClose }) => {
               <div className="relative">
                  <svg width="220" height="220" className="-rotate-90">
                     <circle cx="110" cy="110" r={radius} fill="none" stroke="#F1F1F1" strokeWidth="10" />
-                    <circle cx="110" cy="110" r={radius} fill="none" stroke="#111111" strokeWidth="10" strokeLinecap="round" strokeDasharray={circumf} strokeDashoffset={dashOffset} className="transition-all duration-1000" />
+                    <circle cx="110" cy="110" r={radius} fill="none" stroke="#4A3728" strokeWidth="10" strokeLinecap="round" strokeDasharray={circumf} strokeDashoffset={dashOffset} className="transition-all duration-1000" />
                  </svg>
                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-[48px] font-bold text-[#111111] tracking-tighter leading-none">{mins}:{secs}</span>
+                    <span className="text-[48px] font-bold text-[#4A3728] tracking-tighter leading-none">{mins}:{secs}</span>
                     <span className="text-[11px] font-bold text-[#6B6B6B] uppercase tracking-widest mt-2">{MODES[mode].label}</span>
                     <span className="text-[10px] font-bold text-[#A3A3A3] uppercase mt-1">Cycle #{sessions + 1}</span>
                  </div>
@@ -130,7 +130,7 @@ const PomodoroTimer = ({ taskName = "Study Session", onClose }) => {
            {/* Controls */}
            <div className="flex items-center justify-center gap-6 mb-10">
               <button onClick={() => setTimeLeft(MODES[mode].duration)} className="p-3 bg-[#F1F1F1] rounded-xl hover:bg-[#E6E6E6] transition-all"><RotateCcw size={20} /></button>
-              <button onClick={() => setRunning(!running)} className="w-20 h-20 bg-[#111111] text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all">
+              <button onClick={() => setRunning(!running)} className="w-20 h-20 bg-[#4A3728] text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all">
                  {running ? <Pause size={32} fill="white" /> : <Play size={32} className="ml-1" fill="white" />}
               </button>
               <button onClick={() => switchMode(MODES[mode].kind === 'work' ? 'short' : 'work25')} className="p-3 bg-[#F1F1F1] rounded-xl hover:bg-[#E6E6E6] transition-all"><SkipForward size={20} /></button>
@@ -144,7 +144,7 @@ const PomodoroTimer = ({ taskName = "Study Session", onClose }) => {
                 { label: "Streak", value: sessions, icon: Award },
               ].map((s, i) => (
                 <div key={i} className="bg-[#F9FAFB] border border-[#E6E6E6] rounded-xl p-3 text-center">
-                   <p className="text-[18px] font-bold text-[#111111]">{s.value}</p>
+                   <p className="text-[18px] font-bold text-[#4A3728]">{s.value}</p>
                    <p className="text-[10px] font-bold text-[#A3A3A3] uppercase mt-1">{s.label}</p>
                 </div>
               ))}
@@ -153,7 +153,7 @@ const PomodoroTimer = ({ taskName = "Study Session", onClose }) => {
            {/* Cycle Tracking */}
            <div className="flex justify-center gap-2 mt-6">
               {[0, 1, 2, 3].map(i => (
-                <div key={i} className={`w-2 h-2 rounded-full transition-all ${i < (sessions % 4) ? 'bg-[#111111] scale-125' : 'bg-[#E6E6E6]'}`} />
+                <div key={i} className={`w-2 h-2 rounded-full transition-all ${i < (sessions % 4) ? 'bg-[#4A3728] scale-125' : 'bg-[#E6E6E6]'}`} />
               ))}
            </div>
         </div>

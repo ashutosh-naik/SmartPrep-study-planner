@@ -49,18 +49,69 @@ const Analytics = () => {
           analyticsService.getPerformance(),
           analyticsService.getReadiness(),
         ]);
-        setPerf(perfRes.data);
+        
+        // Sync with local data if available
+        const localSubs = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
+        if (localSubs.length > 0) {
+          const subjectScores = localSubs.map(s => ({
+            subject: s.name,
+            score: s.topics ? Math.round((s.topics.filter(t => t.status === "COMPLETED" || t.done).length / s.topics.length) * 100) : 0
+          }));
+          const avg = Math.round(subjectScores.reduce((a, b) => a + b.score, 0) / subjectScores.length);
+          
+          setPerf({
+            ...perfRes.data,
+            avgScore: avg,
+            subjectScores: subjectScores,
+            examReadyPercentage: avg // Simple mapping
+          });
+        } else {
+          setPerf(perfRes.data);
+        }
         setReadiness(readyRes.data);
       } catch {
+        const localSubs = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
+        const subjectScores = localSubs.map(s => ({
+          subject: s.name,
+          score: s.topics ? Math.round((s.topics.filter(t => t.status === "COMPLETED" || t.done).length / s.topics.length) * 100) : 0
+        }));
+        const avg = subjectScores.length > 0 ? Math.round(subjectScores.reduce((a, b) => a + b.score, 0) / subjectScores.length) : 0;
+
+        // Calculate score trends dynamically from completedAt dates
+        const history = [];
+        const now = new Date();
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          const dStr = d.toISOString().split('T')[0];
+          
+          // Count total completed up to this day
+          const completedUpTo = localSubs.reduce((sum, s) => {
+            return sum + (s.topics ? s.topics.filter(t => {
+              if (t.status !== "COMPLETED" && !t.done) return false;
+              if (!t.completedAt) return true; // Assume old completions
+              return new Date(t.completedAt) <= d;
+            }).length : 0);
+          }, 0);
+          
+          const totalTopics = localSubs.reduce((sum, s) => sum + (s.topics?.length || 0), 0);
+          const scoreAtDate = totalTopics > 0 ? Math.round((completedUpTo / totalTopics) * 100) : 0;
+          
+          history.push({ 
+            week: i === 0 ? "Today" : `${i}d ago`, 
+            score: scoreAtDate 
+          });
+        }
+
         setPerf({
-          avgScore: 0,
-          improvement: 0,
-          bestScore: 0,
-          examReadyPercentage: 0,
-          scoreTrends: [],
-          subjectScores: [],
+          avgScore: avg,
+          improvement: history.length > 1 ? (history[history.length - 1].score - history[0].score) : 0,
+          bestScore: Math.max(...subjectScores.map(s => s.score), 0),
+          examReadyPercentage: avg,
+          scoreTrends: history,
+          subjectScores: subjectScores,
         });
-        setReadiness({ percentage: 0, topicsCovered: 0, totalTopics: 0, focusAreas: [], daysToExam: 0 });
+        setReadiness({ percentage: avg, topicsCovered: 0, totalTopics: 0, focusAreas: [], daysToExam: 0 });
       } finally {
         setLoading(false);
       }
@@ -104,7 +155,7 @@ const Analytics = () => {
         {/* Header Actions */}
         <div className="flex flex-wrap items-center justify-between gap-6 mb-10">
           <div>
-            <h2 className="text-[24px] font-bold text-[#111111] tracking-tight">Performance Summary</h2>
+            <h2 className="text-[24px] font-bold text-[#4A3728] tracking-tight">Performance Summary</h2>
             <p className="text-[12px] font-bold text-[#6B6B6B] uppercase tracking-wider mt-1">Updated as of today</p>
           </div>
           <div className="flex items-center gap-3">
@@ -137,17 +188,20 @@ const Analytics = () => {
         <div className="card bg-[var(--primary)] text-white mb-10 p-10 relative overflow-hidden">
            <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--accent-gold)] opacity-5 rounded-full -mr-32 -mt-32" />
            <div className="relative z-10 flex flex-wrap items-center justify-between gap-8">
-              <div className="max-w-2xl">
+               <div className="max-w-2xl">
                  <div className="flex items-center gap-3 mb-4">
-                    <div className="px-3 py-1 bg-[var(--accent-gold)] text-[var(--primary)] text-[10px] font-black uppercase tracking-widest rounded-sm">AI Prediction</div>
-                    <h3 className="text-[14px] font-bold uppercase tracking-wider text-[#A3A3A3]">Readiness Forecast</h3>
+                    <div className="px-3 py-1 bg-[var(--accent-gold)] text-[var(--primary)] text-[10px] font-black uppercase tracking-widest rounded-sm">Preparation Status</div>
+                    <h3 className="text-[14px] font-bold uppercase tracking-wider text-[#A3A3A3]">Readiness Guide</h3>
                  </div>
                  <p className="text-[20px] text-white leading-relaxed font-semibold">
-                   "You're tracking toward an <span className="text-[var(--accent-gold)]">88% success rate</span>. Your velocity is optimal, but master <span className="text-[var(--accent-gold)]">Networking</span> to secure top-tier results."
+                   {perf?.avgScore > 70 
+                     ? `"You're tracking toward an exceptional success rate. Your velocity is optimal, focus on high-yield PYQs to secure top-tier results."`
+                     : `"You're making steady progress. We recommend increasing focus on your weaker subjects to push your Mastery Index above 80%."`
+                   }
                  </p>
               </div>
               <div className="text-right border-l border-white/10 pl-10">
-                 <p className="text-[64px] font-bold text-[var(--accent-gold)] tracking-tighter leading-none">88%</p>
+                 <p className="text-[64px] font-bold text-[var(--accent-gold)] tracking-tighter leading-none">{perf?.examReadyPercentage || 0}%</p>
                  <p className="text-[11px] font-bold text-[#A3A3A3] uppercase mt-2 tracking-widest">Mastery Index</p>
               </div>
            </div>
@@ -191,23 +245,24 @@ const Analytics = () => {
         {/* Focus Areas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
            <div className="card">
-              <h3 className="text-[14px] font-bold text-[var(--primary)] uppercase tracking-wider mb-8">Optimization Priority</h3>
-              <div className="space-y-6">
-                 {[
-                    { topic: "Operating Systems", score: 62, status: "Critical", color: "bg-[var(--accent-rose)]" },
-                    { topic: "Computer Networks", score: 45, status: "Urgent", color: "bg-[var(--accent-rose)]" },
-                    { topic: "DBMS", score: 78, status: "Review", color: "bg-[var(--accent-gold)]" },
-                 ].map((t, i) => (
+              <h3 className="text-[14px] font-bold text-[var(--primary)] uppercase tracking-wider mb-8">Study Priority</h3>
+               <div className="space-y-6">
+                 {(perf?.subjectScores || []).sort((a,b) => a.score - b.score).slice(0, 3).map((t, i) => (
                     <div key={i}>
                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-[14px] font-bold text-[var(--primary)]">{t.topic}</span>
-                          <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm text-white ${t.color}`}>{t.status}</span>
+                          <span className="text-[14px] font-bold text-[var(--primary)]">{t.subject}</span>
+                          <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm text-white ${t.score < 50 ? 'bg-rose-500' : 'bg-amber-500'}`}>
+                             {t.score < 50 ? 'Critical' : 'Review'}
+                          </span>
                        </div>
                        <div className="w-full h-[8px] bg-[#F1F1F1] rounded-full overflow-hidden">
-                          <div className={`h-full ${t.color} transition-all duration-700`} style={{ width: `${t.score}%` }} />
+                          <div className={`h-full ${t.score < 50 ? 'bg-rose-500' : 'bg-amber-500'} transition-all duration-700`} style={{ width: `${t.score}%` }} />
                        </div>
                     </div>
                  ))}
+                 {(perf?.subjectScores || []).length === 0 && (
+                   <p className="text-[13px] text-gray-400 italic">Add subjects to see optimization priorities.</p>
+                 )}
               </div>
            </div>
 
@@ -219,13 +274,13 @@ const Analytics = () => {
                  <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
                     <Lightbulb size={24} className="text-[var(--accent-gold)]" />
                  </div>
-                 <h3 className="text-[14px] font-bold uppercase tracking-widest">Cognitive Strategy</h3>
+                 <h3 className="text-[14px] font-bold uppercase tracking-widest">Study Tips</h3>
               </div>
               <ul className="space-y-6">
                  {[
-                    "Attack high-friction topics (OS) during your biological peak hours.",
-                    "Execute one full-length adaptive simulation every 72 hours.",
-                    "Optimize memory retention for DSA using active recall cards.",
+                    "Focus on difficult subjects when you have the most energy.",
+                    "Take one full mock test every few days to build confidence.",
+                    "Use the Notes & Flashcards section to memorize key formulas.",
                  ].map((tip, i) => (
                     <li key={i} className="flex gap-4 text-[15px] leading-relaxed text-[#A3A3A3] font-medium">
                        <span className="text-[var(--accent-gold)] font-black text-[12px] pt-1">0{i+1}</span>
