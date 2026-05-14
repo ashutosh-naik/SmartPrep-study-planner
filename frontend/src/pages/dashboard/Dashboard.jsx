@@ -257,6 +257,19 @@ export default function Dashboard() {
     return missed;
   })();
 
+  const handleRecover = async () => {
+    try {
+      const toastId = toast.loading("Rescheduling backlogs...");
+      const res = await taskService.recoverBacklogs();
+      if (res.success) {
+        toast.success("Missions rescheduled!", { id: toastId });
+        // After server recovery, we should ideally fetch the new plan
+        // For now, let's just reload to get fresh data
+        window.location.reload();
+      }
+    } catch { toast.error("Recovery failed"); }
+  };
+
   const executeScheduleGeneration = async () => {
     try {
       if (!genExamDate) { toast.error("Please set your exam date."); return; }
@@ -352,36 +365,33 @@ export default function Dashboard() {
 
   const handleSubtaskToggle = async (task, subtaskId, currentStatus) => {
     try {
+      const newVal = !currentStatus;
+      // 1. Update backend if possible
+      const isLocalId = typeof task.id === 'number' && task.id > 1000000000000;
+      if (!isLocalId) {
+        if (task.isCustomTask) {
+          await taskService.updateCustomTask(task.id, { [`${subtaskId}Completed`]: newVal });
+        } else {
+          // Normalize 'mcqs' to 'mcq' for backend compatibility
+          const type = subtaskId === 'mcqs' ? 'mcq' : subtaskId;
+          await taskService.updateSubtask(task.id, type, newVal);
+        }
+      }
+
+      // 2. Update local state
+      setData(prev => ({
+        ...prev,
+        todaysTasks: prev.todaysTasks.map(t => t.id === task.id ? { ...t, [`${subtaskId}Completed`]: newVal } : t)
+      }));
+
+      // 3. Update localStorage for persistence
       const plan = JSON.parse(localStorage.getItem("sp_study_plan") || "{}");
       Object.keys(plan).forEach(date => {
-        plan[date] = plan[date].map(t => {
-          if (t.id === task.id) return { ...t, [`${subtaskId}Completed`]: !currentStatus };
-          return t;
-        });
+        plan[date] = plan[date].map(t => t.id === task.id ? { ...t, [`${subtaskId}Completed`]: newVal } : t);
       });
       localStorage.setItem("sp_study_plan", JSON.stringify(plan));
 
-      const localSubs = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
-      const updatedSubs = localSubs.map(s => {
-        if (s.name === task.subjectName) {
-          const updatedTopics = (s.topics || []).map(topic => {
-            if (topic.name === task.topicName || topic.title === task.topicName) {
-              return { ...topic, [`${subtaskId}Completed`]: !currentStatus };
-            }
-            return topic;
-          });
-          return { ...s, topics: updatedTopics };
-        }
-        return s;
-      });
-      localStorage.setItem("sp_subjects", JSON.stringify(updatedSubs));
-
-      const isLocalId = typeof task.id === 'number' && task.id > 1000000000000;
-      if (!isLocalId) {
-        try { await taskService.updateSubtask(task.id, subtaskId, !currentStatus); } catch (e) {}
-      }
-      toast.success(`${subtaskId.toUpperCase()} saved!`);
-      window.location.reload();
+      toast.success(`${subtaskId.toUpperCase()} updated`);
     } catch (err) {
       toast.error("Update failed");
     }
@@ -481,6 +491,27 @@ export default function Dashboard() {
              </button>
           </div>
         </div>
+
+        {/* Backlog Alert Section */}
+        {missedTasks.length > 0 && (
+          <div className="mb-10 p-5 rounded-[20px] bg-orange-50 border-2 border-orange-100 flex flex-wrap items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500">
+             <div className="flex items-center gap-5">
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-orange-600 shadow-sm">
+                   <AlertTriangle size={24} />
+                </div>
+                <div>
+                   <h3 className="text-[16px] font-bold text-[#4A3728]">Backlog Detected: {missedTasks.length} Missions Missed</h3>
+                   <p className="text-[13px] text-[#6B6B6B] font-medium">Your study flow is interrupted. Would you like to automatically reschedule these into your future slots?</p>
+                </div>
+             </div>
+             <button 
+               onClick={handleRecover}
+               className="px-6 py-3 bg-[#4A3728] text-white rounded-xl font-bold text-[13px] flex items-center gap-2 hover:bg-[#2D1F16] transition-all shadow-md"
+             >
+                <RotateCcw size={16} /> Recover Backlogs
+             </button>
+          </div>
+        )}
 
         {/* Hero & Radar */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">

@@ -17,6 +17,7 @@ import {
   Maximize2,
   Minimize2,
   Save,
+  GraduationCap
 } from "lucide-react";
 import AnimatedPage from "../../components/AnimatedPage";
 import toast from "react-hot-toast";
@@ -103,7 +104,11 @@ function saveProgress(date, id, patch) {
               status: patch.status === "completed" ? "COMPLETED" : topic.status,
               done: patch.status === "completed" ? true : topic.done,
               notes: patch.notes || topic.notes,
-              watchedSeconds: patch.watchedSeconds || topic.watchedSeconds
+              watchedSeconds: patch.watchedSeconds || topic.watchedSeconds,
+              videoCompleted: patch.videoCompleted ?? topic.videoCompleted,
+              notesCompleted: patch.notesCompleted ?? topic.notesCompleted,
+              mcqCompleted: patch.mcqCompleted ?? topic.mcqCompleted,
+              pyqCompleted: patch.pyqCompleted ?? topic.pyqCompleted
             };
           }
           return topic;
@@ -114,7 +119,14 @@ function saveProgress(date, id, patch) {
     });
     localStorage.setItem("sp_subjects", JSON.stringify(updatedSubjects));
     
-    // Trigger storage event for other tabs/components
+    // 3. API Sync if it's a planner task (and not just local)
+    if (targetTask.id && typeof targetTask.id === 'number') {
+       // Only sync to server if it's a real backend task
+       if (patch.videoCompleted !== undefined) taskService.updateSubtask(targetTask.id, 'video', patch.videoCompleted).catch(() => {});
+       if (patch.notesCompleted !== undefined) taskService.updateSubtask(targetTask.id, 'notes', patch.notesCompleted).catch(() => {});
+       if (patch.status === "completed") taskService.completeTask(targetTask.id).catch(() => {});
+    }
+
     window.dispatchEvent(new Event('storage'));
   }
 }
@@ -214,7 +226,12 @@ export default function StudySession() {
 
   const finishSession = useCallback((sec) => {
     stopTimer(); setIsPlaying(false); setIsCompleted(true); setShowCelebration(true);
-    saveProgress(dateKey, task.id, { status: "completed", watchedSeconds: sec, completedAt: new Date().toISOString() });
+    saveProgress(dateKey, task.id, { 
+      status: "completed", 
+      watchedSeconds: sec, 
+      videoCompleted: true, // Marking video as completed
+      completedAt: new Date().toISOString() 
+    });
     toast.success("Focus Session Mastered!");
     setTimeout(() => setShowCelebration(false), 4000);
   }, [dateKey, task?.id]);

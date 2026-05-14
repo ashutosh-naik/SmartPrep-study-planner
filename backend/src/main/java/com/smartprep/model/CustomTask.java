@@ -51,6 +51,28 @@ public class CustomTask {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    /* ── Granular Progress Tracking (Structured Execution) ── */
+
+    @Builder.Default
+    @Column(name = "video_completed")
+    private Boolean videoCompleted = false;
+
+    @Builder.Default
+    @Column(name = "notes_completed")
+    private Boolean notesCompleted = false;
+
+    @Builder.Default
+    @Column(name = "mcq_completed")
+    private Boolean mcqCompleted = false;
+
+    @Builder.Default
+    @Column(name = "pyq_completed")
+    private Boolean pyqCompleted = false;
+
+    @Builder.Default
+    @Column(name = "is_rescheduled")
+    private Boolean isRescheduled = false;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

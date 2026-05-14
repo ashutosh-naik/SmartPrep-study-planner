@@ -126,6 +126,12 @@ public class TaskController {
             task.setScheduledDate(LocalDate.parse(body.get("scheduledDate").toString()));
         if (body.containsKey("notes"))        task.setNotes(str(body, "notes"));
         if (body.containsKey("status"))       task.setStatus(body.get("status").toString());
+        if (body.containsKey("videoCompleted")) task.setVideoCompleted((Boolean) body.get("videoCompleted"));
+        if (body.containsKey("notesCompleted")) task.setNotesCompleted((Boolean) body.get("notesCompleted"));
+        if (body.containsKey("mcqCompleted"))   task.setMcqCompleted((Boolean) body.get("mcqCompleted"));
+        if (body.containsKey("pyqCompleted"))   task.setPyqCompleted((Boolean) body.get("pyqCompleted"));
+        if (body.containsKey("isRescheduled"))  task.setIsRescheduled((Boolean) body.get("isRescheduled"));
+
         if (body.containsKey("deadline") && body.get("deadline") != null && !body.get("deadline").toString().isBlank()) {
             try { task.setDeadline(LocalDateTime.parse(body.get("deadline").toString().replace(" ", "T").substring(0, 19))); }
             catch (Exception ignored) {}
@@ -142,6 +148,11 @@ public class TaskController {
                 .orElseThrow(() -> new RuntimeException("Task not found or access denied"));
         taskRepo.delete(task);
         return ResponseEntity.ok(ApiResponse.success("Task deleted", null));
+    }
+
+    @PostMapping("/recover")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> recoverBacklogs(Authentication auth) {
+        return ResponseEntity.ok(ApiResponse.success("Recovery roadmap generated", taskService.createRecoveryRoadmap(auth.getName())));
     }
 
     /* ── helpers ── */

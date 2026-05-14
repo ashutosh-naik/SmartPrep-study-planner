@@ -19,7 +19,11 @@ import {
   RefreshCw,
   Circle,
   ClipboardList,
-  BarChart3
+  BarChart3,
+  ChevronRight,
+  Play,
+  ArrowRight,
+  Search
 } from "lucide-react";
 import Navbar from "../../components/Navbar";
 import AnimatedPage from "../../components/AnimatedPage";
@@ -47,6 +51,8 @@ const TaskTracking = () => {
   const [pomodoroTask, setPomodoroTask] = useState("Study Session");
   const [showOverdue, setShowOverdue] = useState(true);
   const [availableSubjects, setAvailableSubjects] = useState([]);
+  const [expandedId, setExpandedId] = useState(null);
+  const [recovering, setRecovering] = useState(false);
   const reminderRef = useRef(null);
 
   useEffect(() => {
@@ -146,6 +152,32 @@ const TaskTracking = () => {
       setTasks(tasks.filter((t) => t.id !== id));
       toast.success("Task removed");
     } catch { toast.error("Failed to delete from server"); }
+  };
+
+  const handleRecover = async () => {
+    setLoading(true);
+    try {
+      const res = await taskService.recoverBacklogs();
+      if (res.success) {
+        toast.success("Recovery roadmap generated! Check your future schedule.");
+        fetchTasks();
+      }
+    } catch { toast.error("Failed to generate recovery roadmap"); }
+    finally { setLoading(false); }
+  };
+
+  const handleSubtaskToggle = async (task, type, currentVal) => {
+    const newVal = !currentVal;
+    try {
+      // Use the generic update for custom tasks, or subtask update for planner tasks
+      if (task.isCustomTask) {
+        await taskService.updateCustomTask(task.id, { [`${type}Completed`]: newVal });
+      } else {
+        await taskService.updateSubtask(task.id, type, newVal);
+      }
+      setTasks(tasks.map(t => t.id === task.id ? { ...t, [`${type}Completed`]: newVal } : t));
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} updated`);
+    } catch { toast.error("Failed to update subtask"); }
   };
 
   const handleEdit = (task) => {
@@ -321,6 +353,15 @@ const TaskTracking = () => {
             ))}
           </div>
           <div className="flex items-center gap-3">
+            <button 
+              onClick={handleRecover} 
+              disabled={loading}
+              className="btn-secondary text-[13px] border-[#A3A3A3] text-[#6B6B6B] flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-600 transition-all disabled:opacity-50"
+              title="Reschedule missed tasks into future slots"
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              Recover Backlogs
+            </button>
             <button onClick={() => { setEditingTask(null); setShowModal(true); }} className="btn-secondary text-[13px] border-[#4A3728] text-[#4A3728] flex items-center gap-2 hover:bg-[#4A3728] hover:text-white transition-all">
               Advanced Create
             </button>
@@ -333,23 +374,69 @@ const TaskTracking = () => {
             const p = PRIORITY_CFG[task.priority] || PRIORITY_CFG.MEDIUM;
             const done = task.status === "completed";
             return (
-              <div key={task.id} className={`card p-5 border-2 transition-all flex items-center gap-4 group hover:scale-[1.01] duration-300 ${done ? "opacity-60 border-[#E6E6E6] bg-[#F9FAFB]" : "border-[#E6E6E6] hover:border-[#4A3728] hover:shadow-md"}`}>
-                <button onClick={() => handleToggleComplete(task)} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${done ? "bg-[#4A3728] border-[#4A3728] text-white" : "border-[#D4D4D4] hover:border-[#4A3728]"}`}>
-                  {done && <Check size={12} />}
-                </button>
-                <div className="flex-1">
-                  <h4 className={`text-[15px] font-bold ${done ? "line-through text-[#6B6B6B]" : "text-[#4A3728]"}`}>{task.title || task.topicName}</h4>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${p.bg} ${p.color} border ${p.border}`}>{p.label}</span>
-                    <span className="text-[11px] font-bold text-[#A3A3A3] flex items-center gap-1"><Clock size={12} /> {task.durationHours}h</span>
-                    {task.subjectName && <span className="text-[11px] font-bold text-[#A3A3A3] flex items-center gap-1">/ {task.subjectName}</span>}
+              <div key={task.id} className={`card border-2 transition-all group duration-300 overflow-hidden ${done ? "opacity-60 border-[#E6E6E6] bg-[#F9FAFB]" : "border-[#E6E6E6] hover:border-[#4A3728] hover:shadow-md"}`}>
+                <div className="p-5 flex items-center gap-4">
+                  <button onClick={() => handleToggleComplete(task)} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${done ? "bg-[#4A3728] border-[#4A3728] text-white" : "border-[#D4D4D4] hover:border-[#4A3728]"}`}>
+                    {done && <Check size={12} />}
+                  </button>
+                  <div className="flex-1 cursor-pointer" onClick={() => setExpandedId(expandedId === task.id ? null : task.id)}>
+                    <div className="flex items-center gap-2">
+                      <h4 className={`text-[15px] font-bold ${done ? "line-through text-[#6B6B6B]" : "text-[#4A3728]"}`}>{task.title || task.topicName}</h4>
+                      {task.isRescheduled && <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 text-[9px] font-black uppercase tracking-tighter flex items-center gap-1"><AlertTriangle size={8}/> Rescheduled</span>}
+                    </div>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${p.bg} ${p.color} border ${p.border}`}>{p.label}</span>
+                      <span className="text-[11px] font-bold text-[#A3A3A3] flex items-center gap-1"><Clock size={12} /> {task.durationHours}h</span>
+                      {task.subjectName && <span className="text-[11px] font-bold text-[#A3A3A3] flex items-center gap-1">/ {task.subjectName}</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => { setPomodoroTask(task.title || task.topicName); setShowPomodoro(true); }} className="p-2 text-[#6B6B6B] hover:text-[#4A3728] transition-transform hover:scale-110 duration-300" title="Start Focus Session"><Timer size={16} /></button>
+                    <button onClick={() => handleEdit(task)} className="p-2 text-[#6B6B6B] hover:text-[#4A3728] transition-transform hover:scale-110 duration-300" title="Edit Task"><Edit3 size={16} /></button>
+                    <button onClick={() => handleDelete(task.id)} className="p-2 text-[#6B6B6B] hover:text-red-600 transition-transform hover:scale-110 duration-300" title="Delete Task"><Trash2 size={16} /></button>
+                    <button onClick={() => setExpandedId(expandedId === task.id ? null : task.id)} className={`p-2 text-[#6B6B6B] transition-transform duration-300 ${expandedId === task.id ? "rotate-90 text-[#4A3728]" : ""}`}><ChevronRight size={16} /></button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => { setPomodoroTask(task.title || task.topicName); setShowPomodoro(true); }} className="p-2 text-[#6B6B6B] hover:text-[#4A3728] transition-transform hover:scale-110 duration-300" title="Start Focus Session"><Timer size={16} /></button>
-                  <button onClick={() => handleEdit(task)} className="p-2 text-[#6B6B6B] hover:text-[#4A3728] transition-transform hover:scale-110 duration-300" title="Edit Task"><Edit3 size={16} /></button>
-                  <button onClick={() => handleDelete(task.id)} className="p-2 text-[#6B6B6B] hover:text-red-500 transition-transform hover:scale-110 duration-300" title="Delete Task"><Trash2 size={16} /></button>
-                </div>
+
+                {/* Expanded Mission Steps */}
+                {expandedId === task.id && (
+                  <div className="px-5 pb-5 pt-2 border-t border-[#F1F1F1] bg-[#FCFCFC] animate-in slide-in-from-top-2 duration-300">
+                    <div className="text-[11px] font-bold text-[#A3A3A3] uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <ArrowRight size={12} /> Mission Objectives
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                      {[
+                        { id: 'video', label: 'Watch Video', icon: <Play size={14}/>, completed: task.videoCompleted, color: 'text-blue-600', bg: 'bg-blue-50' },
+                        { id: 'notes', label: 'Read Notes', icon: <FileText size={14}/>, completed: task.notesCompleted, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                        { id: 'mcq', label: 'Solve MCQs', icon: <CheckCircle2 size={14}/>, completed: task.mcqCompleted, color: 'text-purple-600', bg: 'bg-purple-50' },
+                        { id: 'pyq', label: 'Master PYQs', icon: <Calendar size={14}/>, completed: task.pyqCompleted, color: 'text-amber-600', bg: 'bg-amber-50' }
+                      ].map(step => (
+                        <div 
+                          key={step.id}
+                          onClick={() => handleSubtaskToggle(task, step.id, step.completed)}
+                          className={`flex items-center gap-3 p-3 rounded-[12px] border transition-all cursor-pointer hover:shadow-sm ${step.completed ? `${step.bg} border-transparent` : 'bg-white border-[#E6E6E6] hover:border-[#4A3728]'}`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${step.completed ? 'bg-white shadow-sm' : 'bg-[#F9FAFB]'}`}>
+                            {step.completed ? <Check size={16} className={step.color}/> : step.icon}
+                          </div>
+                          <div className="flex-1">
+                            <div className={`text-[12px] font-bold ${step.completed ? step.color : 'text-[#4A3728]'}`}>{step.label}</div>
+                            <div className="text-[10px] text-[#A3A3A3] font-medium">{step.completed ? 'Completed' : 'Pending'}</div>
+                          </div>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${step.completed ? `bg-white border-transparent shadow-sm` : 'border-[#D4D4D4]'}`}>
+                            {step.completed && <Check size={10} className={step.color}/>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {task.notes && (
+                      <div className="mt-4 p-3 bg-white border border-[#E6E6E6] rounded-[12px]">
+                        <div className="text-[10px] font-bold text-[#A3A3A3] uppercase tracking-wider mb-1">Teacher's Notes</div>
+                        <p className="text-[13px] text-[#6B6B6B] leading-relaxed">{task.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

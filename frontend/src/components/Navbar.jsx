@@ -1,4 +1,5 @@
 import { useAuthStore } from '../store/useAuthStore';
+import { taskService } from "../services/taskService";
 import {
   Bell,
   Search,
@@ -26,41 +27,7 @@ import { useSidebarStore } from "../store/useSidebarStore";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const MOCK_NOTIFICATIONS = [
-  {
-    id: 1,
-    type: "success",
-    icon: CheckCircle,
-    iconColor: "text-green-600",
-    iconBg: "bg-green-50",
-    title: "Session Completed!",
-    message: "You finished 'Data Structures - Arrays' — 2h session",
-    time: "2 min ago",
-    unread: true,
-  },
-  {
-    id: 2,
-    type: "warning",
-    icon: AlertCircle,
-    iconColor: "text-amber-600",
-    iconBg: "bg-amber-50",
-    title: "Backlog Alert",
-    message: "You have 3 skipped sessions that need rescheduling",
-    time: "1h ago",
-    unread: true,
-  },
-  {
-    id: 3,
-    type: "info",
-    icon: Target,
-    iconColor: "text-blue-600",
-    iconBg: "bg-blue-50",
-    title: "Daily Goal Tracker",
-    message: "You have 2 hours of study scheduled for today",
-    time: "3h ago",
-    unread: true,
-  },
-];
+
 
 const SEARCH_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard", type: "Page" },
@@ -82,7 +49,8 @@ const Navbar = ({ title, subtitle }) => {
   const dailyQuote = getDailyQuote();
 
   const [showNotifs, setShowNotifs] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
+  const [isLoadingNotifs, setIsLoadingNotifs] = useState(true);
   const notifRef = useRef(null);
   const unreadCount = notifications.filter((n) => n.unread).length;
 
@@ -94,6 +62,88 @@ const Navbar = ({ title, subtitle }) => {
     searchQuery.trim().length > 0
       ? SEARCH_ITEMS.filter((s) => s.label.toLowerCase().includes(searchQuery.toLowerCase()))
       : SEARCH_ITEMS.slice(0, 5);
+
+  const fetchNotifications = async () => {
+    try {
+      setIsLoadingNotifs(true);
+      const [summary, todayTasks] = await Promise.all([
+        taskService.getTaskSummary(),
+        taskService.getTasks('today')
+      ]);
+
+      const newNotifs = [];
+
+      // 1. Backlog Alert
+      if (summary.skipped > 0) {
+        newNotifs.push({
+          id: 'backlog',
+          type: "warning",
+          icon: AlertCircle,
+          iconColor: "text-amber-600",
+          iconBg: "bg-amber-50",
+          title: "Backlog Alert",
+          message: `You have ${summary.skipped} skipped missions that need recovery.`,
+          time: "Action Required",
+          unread: true,
+        });
+      }
+
+      // 2. Daily Goal
+      const pendingToday = todayTasks.filter(t => t.status !== 'completed').length;
+      if (pendingToday > 0) {
+        newNotifs.push({
+          id: 'daily',
+          type: "info",
+          icon: Target,
+          iconColor: "text-blue-600",
+          iconBg: "bg-blue-50",
+          title: "Daily Mission Tracker",
+          message: `You have ${pendingToday} missions scheduled for deployment today.`,
+          time: "Today",
+          unread: true,
+        });
+      } else if (todayTasks.length > 0) {
+        newNotifs.push({
+          id: 'done',
+          type: "success",
+          icon: CheckCircle,
+          iconColor: "text-green-600",
+          iconBg: "bg-green-50",
+          title: "Missions Accomplished!",
+          message: "All today's study missions have been successfully executed.",
+          time: "Just Now",
+          unread: true,
+        });
+      }
+
+      // 3. Mastery Milestone
+      if (summary.completionRate > 0) {
+        newNotifs.push({
+          id: 'mastery',
+          type: "success",
+          icon: Trophy,
+          iconColor: "text-purple-600",
+          iconBg: "bg-purple-50",
+          title: "Mastery Milestone",
+          message: `Your current platform readiness score is ${summary.completionRate}%.`,
+          time: "Platform Status",
+          unread: false,
+        });
+      }
+
+      setNotifications(newNotifs);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setIsLoadingNotifs(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handler = (e) => {

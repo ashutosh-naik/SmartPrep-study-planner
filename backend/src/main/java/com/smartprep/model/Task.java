@@ -108,5 +108,9 @@ public class Task {
     @Column(name = "pyq_completed")
     private Boolean pyqCompleted = false;
 
+    @Builder.Default
+    @Column(name = "is_rescheduled")
+    private Boolean isRescheduled = false;
+
 }
 
