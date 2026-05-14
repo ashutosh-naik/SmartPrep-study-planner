@@ -15,6 +15,9 @@ import {
   Play,
   Plus,
   CheckCircle2,
+  FileText,
+  CheckCircle,
+  Target
 } from "lucide-react";
 
 import Navbar from "../../components/Navbar";
@@ -42,75 +45,88 @@ import {
   addMonths,
 } from "date-fns";
 import toast from "react-hot-toast";
-import PomodoroTimer from "../../components/PomodoroTimer";
 
 const DIFFICULTY_HOURS = { Hard: 1.5, Medium: 1, Easy: 0.75 };
 
-function generateStudyPlan(subjects, examDateStr, hoursPerDay) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const examDate = new Date(examDateStr);
-  examDate.setHours(0, 0, 0, 0);
-  const totalDays = Math.max(1, Math.ceil((examDate - today) / 86400000));
+/**
+ * Humanized schedule generator.
+ * Tries to pack topics into available daily hours until the exam date.
+ */
+const createStudySchedule = (subjectList, examStr, maxHoursPerDay) => {
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+  
+  const targetExamDate = new Date(examStr);
+  targetExamDate.setHours(0, 0, 0, 0);
+  
+  const daysRemaining = Math.max(1, Math.ceil((targetExamDate - currentDate) / (1000 * 60 * 60 * 24)));
 
-  const allTopics = [];
-  subjects.forEach((subj) => {
-    subj.topics.forEach((topic) => {
-      if (topic.done || topic.status === "COMPLETED") return;
-      const fallbackHours = DIFFICULTY_HOURS[subj.difficulty] || 1;
-      allTopics.push({
-        subjectName: subj.name,
-        topicName: topic.name,
-        difficulty: subj.difficulty || "Medium",
-        durationHours: topic.estimatedHours ? parseFloat(topic.estimatedHours) : fallbackHours,
-        priority: topic.status === "IN_PROGRESS" ? 0 : 1,
+  const pendingItems = [];
+  
+  // Collect all unfinished topics across all selected subjects
+  subjectList.forEach((subject) => {
+    (subject.topics || []).forEach((item) => {
+      if (item.done || item.status === "COMPLETED") return;
+      
+      const estimatedTime = item.estimatedHours ? parseFloat(item.estimatedHours) : (DIFFICULTY_HOURS[subject.difficulty] || 1);
+      
+      pendingItems.push({
+        subjectName: subject.name,
+        topicName: item.name,
+        difficulty: subject.difficulty || "Medium",
+        durationHours: estimatedTime,
+        priority: item.status === "IN_PROGRESS" ? 0 : 1, // Start with what's in progress
       });
     });
   });
 
-  if (allTopics.length === 0) return {};
+  if (!pendingItems.length) return {};
 
-  allTopics.sort((a, b) => {
+  // Sort by priority first, then difficulty
+  pendingItems.sort((a, b) => {
     if (a.priority !== b.priority) return a.priority - b.priority;
-    const dw = { Hard: 0, Medium: 1, Easy: 2 };
-    return (dw[a.difficulty] ?? 1) - (dw[b.difficulty] ?? 1);
+    const diffWeights = { Hard: 0, Medium: 1, Easy: 2 };
+    return (diffWeights[a.difficulty] ?? 1) - (diffWeights[b.difficulty] ?? 1);
   });
 
-  const plan = {};
-  let dayIdx = 0;
-  let dayHours = 0;
+  const finalSchedule = {};
+  let currentOffset = 0;
+  let dailyAccumulatedHours = 0;
 
-  allTopics.forEach((topic) => {
-    const dateKey = format(addDays(today, dayIdx), "yyyy-MM-dd");
-    if (!plan[dateKey]) plan[dateKey] = [];
-
-    if (dayHours + topic.durationHours > hoursPerDay && plan[dateKey].length > 0) {
-      dayIdx = Math.min(dayIdx + 1, totalDays - 1);
-      dayHours = 0;
+  pendingItems.forEach((task) => {
+    let targetDayStr = format(addDays(currentDate, currentOffset), "yyyy-MM-dd");
+    
+    // Shift to next day if we exceed daily limit
+    if (dailyAccumulatedHours + task.durationHours > maxHoursPerDay) {
+      currentOffset = Math.min(currentOffset + 1, daysRemaining - 1);
+      dailyAccumulatedHours = 0;
+      targetDayStr = format(addDays(currentDate, currentOffset), "yyyy-MM-dd");
     }
 
-    const finalDate = format(addDays(today, dayIdx), "yyyy-MM-dd");
-    if (!plan[finalDate]) plan[finalDate] = [];
+    if (!finalSchedule[targetDayStr]) {
+      finalSchedule[targetDayStr] = [];
+    }
 
-    plan[finalDate].push({
+    finalSchedule[targetDayStr].push({
       id: Date.now() + Math.random(),
-      subjectName: topic.subjectName,
-      topicName: topic.topicName,
-      durationHours: topic.durationHours,
-      difficulty: topic.difficulty,
+      subjectName: task.subjectName,
+      topicName: task.topicName,
+      durationHours: task.durationHours,
+      difficulty: task.difficulty,
       status: "pending",
       isBacklog: false,
     });
-    dayHours += topic.durationHours;
+    
+    dailyAccumulatedHours += task.durationHours;
 
-    if (dayHours >= hoursPerDay) {
-      dayIdx = Math.min(dayIdx + 1, totalDays - 1);
-      dayHours = 0;
+    if (dailyAccumulatedHours >= maxHoursPerDay) {
+      currentOffset = Math.min(currentOffset + 1, daysRemaining - 1);
+      dailyAccumulatedHours = 0;
     }
   });
 
-  return plan;
-}
+  return finalSchedule;
+};
 
 const StudyPlanner = () => {
   const { user, updateUser } = useAuthStore();
@@ -120,47 +136,49 @@ const StudyPlanner = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [dailyTasks, setDailyTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showPomodoro, setShowPomodoro] = useState(false);
-  const [pomodoroTask, setPomodoroTask] = useState("Study Session");
   const [viewMode, setViewMode] = useState("week");
   const [monthDate, setMonthDate] = useState(new Date());
   const [showGenModal, setShowGenModal] = useState(false);
   const [genHours, setGenHours] = useState(user?.studyHoursPerDay || 4);
   const [genExamDate, setGenExamDate] = useState(user?.examDate || "");
-  const [hasPlan, setHasPlan] = useState(true);
   const [selectedGenSubjects, setSelectedGenSubjects] = useState([]);
-  const [hoveredCalDate, setHoveredCalDate] = useState(null);
-
   const [draggedTask, setDraggedTask] = useState(null);
   const [dragOverDate, setDragOverDate] = useState(null);
-
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [newTask, setNewTask] = useState({ subjectName: "", topicName: "", durationHours: 1 });
+  const [liveSubjects, setLiveSubjects] = useState([]);
 
   useEffect(() => { setWeekDates(getWeekDates(weekStart)); }, [weekStart]);
   useEffect(() => { fetchDailyTasks(); }, [selectedDate]);
 
   useEffect(() => {
-    if (showGenModal) {
-      const subs = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
-      setSelectedGenSubjects(subs.map((s) => s.id));
-    }
+    const fetchLiveSubjects = async () => {
+      try {
+        const { subjectService } = await import('../../services/subjectService');
+        const res = await subjectService.getSubjects();
+        if (res.success) {
+          setLiveSubjects(res.data);
+          if (selectedGenSubjects.length === 0) {
+            setSelectedGenSubjects(res.data.map(s => s.id));
+          }
+        }
+      } catch (err) { console.error("Failed to fetch subjects"); }
+    };
+    if (showGenModal) fetchLiveSubjects();
   }, [showGenModal]);
 
   const fetchDailyTasks = async () => {
     setLoading(true);
     try {
-      const dateStr = selectedDate.toISOString().split("T")[0];
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
       const localPlan = JSON.parse(localStorage.getItem("sp_study_plan") || "{}");
-      if (localPlan[dateStr] && localPlan[dateStr].length > 0) {
+      if (localPlan[dateStr]) {
         setDailyTasks(localPlan[dateStr]);
-        setHasPlan(true);
         setLoading(false);
         return;
       }
       const res = await plannerService.getDailyPlan(dateStr);
       setDailyTasks(res.data && res.data.length > 0 ? res.data : []);
-      if (res.data && res.data.length > 0) setHasPlan(true);
     } catch {
       setDailyTasks([]);
     } finally {
@@ -168,20 +186,18 @@ const StudyPlanner = () => {
     }
   };
 
-  const handleGeneratePlan = () => {
+  const executeScheduleGeneration = () => {
     if (!genExamDate) { toast.error("Please set your exam date."); return; }
     if (selectedGenSubjects.length === 0) { toast.error("Please select at least one subject."); return; }
 
-    let subs = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
-    subs = subs.filter((s) => selectedGenSubjects.includes(s.id));
-
-    const plan = generateStudyPlan(subs, genExamDate, genHours);
-    const totalSessions = Object.values(plan).reduce((a, d) => a + d.length, 0);
-
-    if (totalSessions === 0) { toast.error("No topics found to schedule."); return; }
+    const subs = liveSubjects.filter((s) => selectedGenSubjects.includes(s.id));
+    const newPlan = createStudySchedule(subs, genExamDate, genHours);
+    
+    if (Object.keys(newPlan).length === 0) { toast.error("No topics found to schedule."); return; }
 
     const existingPlan = JSON.parse(localStorage.getItem("sp_study_plan") || "{}");
-    const mergedPlan = { ...plan };
+    const mergedPlan = { ...newPlan };
+    
     Object.keys(existingPlan).forEach((dateKey) => {
       const completedTasks = existingPlan[dateKey].filter(t => t.status === "completed");
       if (completedTasks.length > 0) {
@@ -190,72 +206,58 @@ const StudyPlanner = () => {
     });
 
     localStorage.setItem("sp_study_plan", JSON.stringify(mergedPlan));
-    setHasPlan(true);
     updateUser({ examDate: genExamDate });
     syncToTimetable(mergedPlan);
     setShowGenModal(false);
-    toast.success("Schedule generated successfully!");
+    toast.success("Schedule generated!");
     fetchDailyTasks();
   };
 
   const handleAddTask = () => {
     if (!newTask.subjectName || !newTask.topicName) { toast.error("Please fill all fields."); return; }
-    
-    const dateStr = selectedDate.toISOString().split("T")[0];
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
     const existingPlan = JSON.parse(localStorage.getItem("sp_study_plan") || "{}");
-    const dayTasks = existingPlan[dateStr] || [];
-    
-    const taskToAdd = {
-      id: Date.now(),
-      ...newTask,
-      status: "pending",
-      isBacklog: false
-    };
-
-    existingPlan[dateStr] = [...dayTasks, taskToAdd];
+    existingPlan[dateStr] = [...(existingPlan[dateStr] || []), { id: Date.now(), ...newTask, status: "pending" }];
     localStorage.setItem("sp_study_plan", JSON.stringify(existingPlan));
-    
     setShowAddTaskModal(false);
     setNewTask({ subjectName: "", topicName: "", durationHours: 1 });
-    toast.success("Task added to schedule!");
+    toast.success("Task added!");
     fetchDailyTasks();
   };
 
-  const syncToTimetable = async (plan) => {
+  const syncToTimetable = async (scheduleMap) => {
     try {
-      const toastId = toast.loading("Syncing to Timetable...");
-      const existingSlots = await timetableService.getSlots();
-      for (const s of existingSlots) await timetableService.deleteSlot(s.id);
+      const toastId = toast.loading("Syncing...");
+      const currentSlots = await timetableService.getSlots();
+      await Promise.all(currentSlots.map(s => timetableService.deleteSlot(s.id)));
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const newSlots = [];
+      const upcomingSlots = [];
+      const baseDate = new Date();
+      baseDate.setHours(0,0,0,0);
+
       for (let i = 0; i < 7; i++) {
-        const d = addDays(today, i);
-        const dateKey = format(d, "yyyy-MM-dd");
-        const dayTasks = plan[dateKey] || [];
-        let startHour = 17;
-        for (const task of dayTasks) {
-          if (task.status === "completed") continue;
-          const duration = parseFloat(task.durationHours || 1);
-          const endHour = startHour + duration;
-          let dayIso = d.getDay();
-          if (dayIso === 0) dayIso = 7;
-
-          newSlots.push({
-            dayOfWeek: dayIso,
-            startTime: `${String(Math.floor(startHour)).padStart(2, "0")}:00:00`,
-            endTime: `${String(Math.floor(endHour)).padStart(2, "0")}:00:00`,
-            subjectName: task.subjectName,
-            color: "#111111",
-            label: task.topicName,
+        const d = addDays(baseDate, i);
+        const dStr = format(d, "yyyy-MM-dd");
+        const tasks = scheduleMap[dStr] || [];
+        let h = 17;
+        tasks.forEach(t => {
+          if (t.status === "completed") return;
+          const end = h + parseFloat(t.durationHours || 1);
+          upcomingSlots.push({
+            dayOfWeek: d.getDay() === 0 ? 7 : d.getDay(),
+            startTime: `${String(Math.floor(h)).padStart(2,"0")}:00:00`,
+            endTime: `${String(Math.floor(end)).padStart(2,"0")}:00:00`,
+            subjectName: t.subjectName,
+            label: t.topicName,
+            color: "#111111"
           });
-          startHour = endHour;
-        }
+          h = end;
+        });
       }
-      for (const slot of newSlots) await timetableService.createSlot(slot);
-      toast.success("Timetable synced!", { id: toastId });
-    } catch (err) { toast.error("Failed to sync timetable."); }
+
+      for (const s of upcomingSlots) await timetableService.createSlot(s);
+      toast.success("Synced!", { id: toastId });
+    } catch (err) { toast.error("Sync failed"); }
   };
 
   const prevWeek = () => setWeekStart(addDays(weekStart, -7));
@@ -263,259 +265,216 @@ const StudyPlanner = () => {
   const goToday = () => { setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 })); setSelectedDate(new Date()); };
 
   const buildMonthGrid = () => {
-    const mStart = startOfMonth(monthDate);
-    const mEnd = endOfMonth(monthDate);
-    const gridStart = startOfWeek(mStart, { weekStartsOn: 1 });
-    const gridEnd = addDays(startOfWeek(mEnd, { weekStartsOn: 1 }), 6);
-    return eachDayOfInterval({ start: gridStart, end: gridEnd });
+    const start = startOfWeek(startOfMonth(monthDate), { weekStartsOn: 1 });
+    const end = addDays(startOfWeek(endOfMonth(monthDate), { weekStartsOn: 1 }), 6);
+    return eachDayOfInterval({ start, end });
   };
 
   const fullPlan = JSON.parse(localStorage.getItem("sp_study_plan") || "{}");
 
   return (
     <AnimatedPage>
-      {showPomodoro && <PomodoroTimer taskName={pomodoroTask} onClose={() => setShowPomodoro(false)} />}
-
-      {/* Generate Schedule Modal */}
-      {showGenModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl border border-[#E6E6E6] shadow-2xl w-full max-w-lg p-8 animate-fade-in">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-bold text-[#4A3728] tracking-tight">Generate Plan</h2>
-              <button onClick={() => setShowGenModal(false)} className="text-[#6B6B6B] hover:text-[#4A3728]"><X size={20} /></button>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <label className="text-[13px] font-bold text-[#4A3728] uppercase tracking-wider mb-3 block">Exam Date</label>
-                <input type="date" value={genExamDate} onChange={(e) => setGenExamDate(e.target.value)} className="input-field" />
+      <>
+        {/* Modals */}
+        {showGenModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md p-4">
+            <div className="bg-white rounded-2xl border border-[#E6E6E6] shadow-2xl w-full max-w-lg p-8">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-xl font-black uppercase tracking-tight">Generate Study Plan</h2>
+                <button onClick={() => setShowGenModal(false)}><X size={20} /></button>
               </div>
-              <div>
-                <label className="text-[13px] font-bold text-[#4A3728] uppercase tracking-wider mb-3 block">Daily Study Limit: {genHours}h</label>
-                <input type="range" min={1} max={12} step={0.5} value={genHours} onChange={(e) => setGenHours(Number(e.target.value))} className="w-full accent-[#4A3728]" />
-              </div>
-              <div className="flex gap-4">
-                <button onClick={handleGeneratePlan} className="btn-primary flex-1">Create Schedule</button>
-                <button onClick={() => setShowGenModal(false)} className="btn-secondary">Cancel</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Task Modal */}
-      {showAddTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl border border-[#E6E6E6] shadow-2xl w-full max-w-md p-8 animate-fade-in">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-bold text-[#4A3728] tracking-tight">Add Study Session</h2>
-              <button onClick={() => setShowAddTaskModal(false)} className="text-[#6B6B6B] hover:text-[#4A3728]"><X size={20} /></button>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <label className="text-[13px] font-bold text-[#4A3728] uppercase tracking-wider mb-2 block">Subject</label>
-                <input 
-                  type="text" 
-                  value={newTask.subjectName} 
-                  onChange={(e) => setNewTask({...newTask, subjectName: e.target.value})} 
-                  placeholder="e.g. Mathematics"
-                  className="input-field" 
-                />
-              </div>
-              <div>
-                <label className="text-[13px] font-bold text-[#4A3728] uppercase tracking-wider mb-2 block">Topic</label>
-                <input 
-                  type="text" 
-                  value={newTask.topicName} 
-                  onChange={(e) => setNewTask({...newTask, topicName: e.target.value})} 
-                  placeholder="e.g. Calculus Integration"
-                  className="input-field" 
-                />
-              </div>
-              <div>
-                <label className="text-[13px] font-bold text-[#4A3728] uppercase tracking-wider mb-2 block">Duration: {newTask.durationHours}h</label>
-                <input 
-                  type="range" min={0.5} max={6} step={0.5} 
-                  value={newTask.durationHours} 
-                  onChange={(e) => setNewTask({...newTask, durationHours: parseFloat(e.target.value)})} 
-                  className="w-full accent-[#4A3728]" 
-                />
-              </div>
-              <div className="flex gap-4">
-                <button onClick={handleAddTask} className="btn-primary flex-1">Add to Schedule</button>
-                <button onClick={() => setShowAddTaskModal(false)} className="btn-secondary">Cancel</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <Navbar title="Study Planner" subtitle="Manage your weekly study routine" />
-      <div className="p-6 lg:p-10 animate-fade-in max-w-[1400px] mx-auto">
-        
-        {/* Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-6 mb-10">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <button onClick={prevWeek} className="p-2 hover:bg-white rounded-md border border-transparent hover:border-[#E6E6E6] transition-all"><ChevronLeft size={18} /></button>
-              <h3 className="text-[15px] font-bold text-[#4A3728] min-w-[150px] text-center">
-                {viewMode === 'week' ? `${formatShortDate(weekStart)} — ${formatShortDate(addDays(weekStart, 6))}` : format(monthDate, "MMMM yyyy")}
-              </h3>
-              <button onClick={nextWeek} className="p-2 hover:bg-white rounded-md border border-transparent hover:border-[#E6E6E6] transition-all"><ChevronRight size={18} /></button>
-            </div>
-            <button onClick={goToday} className="text-[13px] font-bold text-[#6B6B6B] hover:text-[#4A3728]">Today</button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex p-1 bg-[#F1F1F1] rounded-[8px]">
-              <button onClick={() => setViewMode("week")} className={`px-4 py-1.5 rounded-[6px] text-[12px] font-bold transition-all ${viewMode === "week" ? "bg-white text-[#4A3728] shadow-sm" : "text-[#6B6B6B]"}`}>Week</button>
-              <button onClick={() => setViewMode("month")} className={`px-4 py-1.5 rounded-[6px] text-[12px] font-bold transition-all ${viewMode === "month" ? "bg-white text-[#4A3728] shadow-sm" : "text-[#6B6B6B]"}`}>Month</button>
-            </div>
-            <button onClick={() => setShowGenModal(true)} className="btn-primary text-[13px] flex items-center gap-2"><CalIcon size={16} /> Generate Plan</button>
-          </div>
-        </div>
-
-        {/* View Mode Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
-          <div className="lg:col-span-3">
-            {viewMode === "month" ? (
-              <div className="card">
-                <div className="grid grid-cols-7 mb-4">
-                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => (
-                    <div key={d} className="text-center text-[11px] font-bold text-[#6B6B6B] uppercase tracking-widest">{d}</div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-2">
-                  {buildMonthGrid().map((date, i) => {
-                    const isToday = isSameDay(date, new Date());
-                    const isSelected = isSameDay(date, selectedDate);
-                    const hasTasks = !!fullPlan[format(date, "yyyy-MM-dd")];
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedDate(date)}
-                        className={`aspect-square rounded-[8px] border transition-all flex flex-col items-center justify-center gap-1 ${
-                          isSelected ? "border-[#4A3728] bg-[#4A3728] text-white shadow-lg" : 
-                          isToday ? "border-[#4A3728] text-[#4A3728] bg-gray-50" : 
-                          "border-[#E6E6E6] text-[#6B6B6B] hover:border-[#4A3728] hover:text-[#4A3728]"
-                        }`}
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[11px] font-black uppercase tracking-widest text-[#A3A3A3] mb-3 block">Subjects</label>
+                  <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-1">
+                    {liveSubjects.map(s => (
+                      <button 
+                        key={s.id} 
+                        onClick={() => setSelectedGenSubjects(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${selectedGenSubjects.includes(s.id) ? 'border-[#4A3728] bg-gray-50' : 'border-gray-100'}`}
                       >
-                        <span className="text-[14px] font-bold">{format(date, "d")}</span>
-                        {hasTasks && <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-[#0369A1]'}`} />}
+                        <p className="text-[13px] font-bold text-[#4A3728]">{s.name}</p>
+                        <p className="text-[10px] text-[#6B6B6B]">{s.topics?.length || 0} Topics</p>
                       </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11px] font-black uppercase tracking-widest text-[#A3A3A3] mb-3 block">Exam Date</label>
+                    <input type="date" value={genExamDate} onChange={e => setGenExamDate(e.target.value)} className="input-field" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-black uppercase tracking-widest text-[#A3A3A3] mb-3 block">Daily Goal (Saved): {genHours}h</label>
+                    <input type="range" min={1} max={12} step={0.5} value={genHours} onChange={e => setGenHours(Number(e.target.value))} className="w-full accent-[#4A3728]" />
+                  </div>
+                </div>
+                <button onClick={executeScheduleGeneration} className="btn-primary w-full !py-4 flex items-center justify-center gap-2">
+                  <Zap size={18} className="text-[var(--accent-gold)]" /> Generate Plan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAddTaskModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-xl border border-[#E6E6E6] shadow-2xl w-full max-w-md p-8">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-xl font-bold text-[#4A3728]">Add Study Session</h2>
+                <button onClick={() => setShowAddTaskModal(false)}><X size={20} /></button>
+              </div>
+              <div className="space-y-6">
+                <input type="text" value={newTask.subjectName} onChange={e => setNewTask({...newTask, subjectName: e.target.value})} placeholder="Subject" className="input-field" />
+                <input type="text" value={newTask.topicName} onChange={e => setNewTask({...newTask, topicName: e.target.value})} placeholder="Topic" className="input-field" />
+                <div className="flex gap-4">
+                  <button onClick={handleAddTask} className="btn-primary flex-1">Add</button>
+                  <button onClick={() => setShowAddTaskModal(false)} className="btn-secondary">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <Navbar title="Study Planner" subtitle="Manage your weekly study routine" />
+        <div className="p-6 lg:p-10 animate-fade-in max-w-[1400px] mx-auto">
+          <div className="flex flex-wrap items-center justify-between gap-6 mb-10">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <button onClick={prevWeek} className="p-2 hover:bg-white rounded-md border border-transparent hover:border-[#E6E6E6] transition-all"><ChevronLeft size={18} /></button>
+                <h3 className="text-[15px] font-bold text-[#4A3728] min-w-[150px] text-center">
+                  {viewMode === 'week' ? `${formatShortDate(weekStart)} — ${formatShortDate(addDays(weekStart, 6))}` : format(monthDate, "MMMM yyyy")}
+                </h3>
+                <button onClick={nextWeek} className="p-2 hover:bg-white rounded-md border border-transparent hover:border-[#E6E6E6] transition-all"><ChevronRight size={18} /></button>
+              </div>
+              <button onClick={goToday} className="text-[13px] font-bold text-[#6B6B6B] hover:text-[#4A3728]">Today</button>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex p-1 bg-[#F1F1F1] rounded-[8px]">
+                <button onClick={() => setViewMode("week")} className={`px-4 py-1.5 rounded-[6px] text-[12px] font-bold ${viewMode === "week" ? "bg-white text-[#4A3728] shadow-sm" : "text-[#6B6B6B]"}`}>Week</button>
+                <button onClick={() => setViewMode("month")} className={`px-4 py-1.5 rounded-[6px] text-[12px] font-bold ${viewMode === "month" ? "bg-white text-[#4A3728] shadow-sm" : "text-[#6B6B6B]"}`}>Month</button>
+              </div>
+              <button onClick={() => setShowGenModal(true)} className="btn-primary text-[13px] flex items-center gap-2"><CalIcon size={16} /> Generate Plan</button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+            <div className="lg:col-span-3">
+              {viewMode === "week" ? (
+                <div className="grid grid-cols-7 gap-4">
+                  {weekDates.map((date, idx) => {
+                    const dateStr = format(date, "yyyy-MM-dd");
+                    const tasks = fullPlan[dateStr] || [];
+                    const isToday = isSameDay(date, new Date());
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`min-h-[400px] rounded-xl border transition-all ${isToday ? 'bg-[#FAF9F6] border-[#4A3728] shadow-sm' : 'bg-white border-[#E6E6E6]'}`}
+                        onDragOver={e => e.preventDefault()}
+                        onDrop={() => {
+                          if (draggedTask) {
+                            const oldPlan = JSON.parse(localStorage.getItem("sp_study_plan") || "{}");
+                            oldPlan[draggedTask.date] = oldPlan[draggedTask.date].filter(t => t.id !== draggedTask.id);
+                            oldPlan[dateStr] = [...(oldPlan[dateStr] || []), { ...draggedTask, date: dateStr }];
+                            localStorage.setItem("sp_study_plan", JSON.stringify(oldPlan));
+                            setDraggedTask(null);
+                            fetchDailyTasks();
+                          }
+                        }}
+                      >
+                        <div className={`p-4 border-b ${isToday ? 'border-[#4A3728]/10' : 'border-[#F1F1F1]'}`}>
+                          <p className="text-[11px] font-black uppercase tracking-widest text-[#A3A3A3]">{format(date, "EEE")}</p>
+                          <p className="text-[18px] font-black text-[#111111]">{format(date, "d")}</p>
+                        </div>
+                        <div className="p-2 space-y-2">
+                          {tasks.map(task => (
+                            <div 
+                              key={task.id} 
+                              draggable
+                              onDragStart={() => setDraggedTask({ ...task, date: dateStr })}
+                              className={`p-3 rounded-lg border bg-white border-[#E6E6E6] shadow-sm cursor-move hover:scale-[1.02] transition-all ${task.status === 'completed' ? 'opacity-50' : ''}`}
+                            >
+                              <p className="text-[10px] font-black text-[#A3A3A3] uppercase truncate">{task.subjectName}</p>
+                              <p className="text-[12px] font-bold text-[#4A3728] truncate">{task.topicName}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {weekDates.map((date, i) => {
-                  const isToday = isDateToday(date);
-                  const isSelected = isSameDay(date, selectedDate);
-                  const dateKey = format(date, "yyyy-MM-dd");
-                  const tasks = fullPlan[dateKey] || [];
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedDate(date)}
-                      className={`flex items-center justify-between p-5 rounded-xl border transition-all ${
-                        isSelected ? "bg-white border-[#4A3728] shadow-md" : "bg-white border-[#E6E6E6] hover:border-[#4A3728]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-6">
-                        <div className="text-left w-12">
-                          <p className={`text-[11px] font-bold uppercase tracking-widest ${isSelected ? 'text-[#4A3728]' : 'text-[#6B6B6B]'}`}>{format(date, "EEE")}</p>
-                          <p className={`text-[20px] font-bold leading-none mt-1 ${isSelected ? 'text-[#4A3728]' : 'text-[#4A3728]'}`}>{format(date, "d")}</p>
-                        </div>
-                        <div className="h-8 w-px bg-[#E6E6E6]" />
-                        <div className="text-left">
-                          <p className="text-[14px] font-bold text-[#4A3728]">{tasks.length} Sessions</p>
-                          <p className="text-[12px] text-[#6B6B6B] font-medium">{tasks.reduce((a,t)=>a+(t.durationHours||0),0)}h total study time</p>
+              ) : (
+                <div className="grid grid-cols-7 gap-2">
+                  {buildMonthGrid().map((date, idx) => {
+                    const dateStr = format(date, "yyyy-MM-dd");
+                    const tasks = fullPlan[dateStr] || [];
+                    const isToday = isSameDay(date, new Date());
+                    const isCurrentMonth = isSameMonth(date, monthDate);
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`min-h-[100px] p-2 rounded-lg border transition-all ${!isCurrentMonth ? 'opacity-30' : isToday ? 'border-[#4A3728] bg-gray-50' : 'bg-white border-[#E6E6E6]'}`}
+                        onClick={() => { setSelectedDate(date); setViewMode('week'); setWeekStart(startOfWeek(date, { weekStartsOn: 1 })); }}
+                      >
+                        <p className="text-[12px] font-black">{format(date, "d")}</p>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {tasks.slice(0, 3).map((t, i) => <div key={i} className="w-1 h-1 rounded-full bg-[#4A3728]" />)}
                         </div>
                       </div>
-                      <ChevronRight size={18} className={isSelected ? 'text-[#4A3728]' : 'text-[#E6E6E6]'} />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Daily Detail Side */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="card">
-              <div className="mb-6 flex justify-between items-center">
-                <div>
-                  <h3 className="text-[15px] font-bold text-[#4A3728]">{format(selectedDate, "EEEE")}</h3>
-                  <p className="text-[12px] text-[#6B6B6B] font-medium">{format(selectedDate, "MMMM d, yyyy")}</p>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setShowAddTaskModal(true)} className="p-2 text-[#6B6B6B] hover:text-[#4A3728] transition-transform hover:scale-110 duration-300" title="Add Task"><Plus size={18} /></button>
-                  <button onClick={() => setShowPomodoro(true)} className="p-2 text-[#6B6B6B] hover:text-[#4A3728] transition-transform hover:scale-110 duration-300" title="Pomodoro Timer"><Clock size={18} /></button>
+              )}
+            </div>
+
+            <div className="space-y-10">
+              <div className="card p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-[13px] font-black uppercase tracking-widest">Today's Focus</h3>
+                  <button onClick={() => setShowAddTaskModal(true)} className="p-2 bg-[#F1F1F1] rounded-lg text-[#4A3728]"><Plus size={16} /></button>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                {dailyTasks.map((task) => (
-                  <div key={task.id} className="p-4 border border-[#E6E6E6] rounded-xl bg-white hover:border-[#4A3728] transition-all group shadow-sm">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-bold text-[#6B6B6B] uppercase tracking-widest">{task.subjectName}</span>
-                      <span className="text-[10px] font-bold text-[#4A3728] bg-gray-100 px-2 py-0.5 rounded-full">{task.durationHours}h</span>
-                    </div>
-                    <p className={`text-[14px] font-bold leading-tight mb-4 ${task.status === 'completed' ? 'text-[#A3A3A3] line-through' : 'text-[#4A3728]'}`}>
-                      {task.topicName}
-                    </p>
-
-                    {/* Granular Sub-tasks */}
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { id: 'video', label: 'Video', icon: Play, checked: task.videoCompleted },
-                        { id: 'notes', label: 'Notes', icon: FileText, checked: task.notesCompleted },
-                        { id: 'mcq', label: 'MCQs', icon: CheckCircle2, checked: task.mcqCompleted, hide: task.hasMcqs === false },
-                        { id: 'pyq', label: 'PYQs', icon: Target, checked: task.pyqCompleted, hide: task.hasPyqs === false },
-                      ].filter(st => !st.hide).map(st => (
-                        <button
-                          key={st.id}
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              await taskService.updateSubtask(task.id, st.id, !st.checked);
-                              toast.success(`${st.label} updated`);
-                              fetchDailyTasks();
-                            } catch (err) {
-                              toast.error("Update failed");
-                            }
-                          }}
-                          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md border transition-all ${
-                            st.checked 
-                              ? 'bg-[#4A3728] text-white border-[#4A3728]' 
-                              : 'bg-gray-50 text-[#6B6B6B] border-gray-100 hover:border-[#4A3728]'
-                          }`}
-                        >
-                          <st.icon size={10} />
-                          <span className="text-[9px] font-black uppercase tracking-wider">{st.label}</span>
+                <div className="space-y-4">
+                  {dailyTasks.map(task => (
+                    <div key={task.id} className="p-5 rounded-xl border border-[#E6E6E6] bg-white hover:border-[#4A3728] transition-all group">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <p className="text-[10px] font-black text-[#A3A3A3] uppercase tracking-widest">{task.subjectName}</p>
+                          <h4 className="text-[15px] font-black text-[#4A3728] tracking-tight">{task.topicName}</h4>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {[
+                          { id: 'video', label: 'Watch', icon: Zap },
+                          { id: 'notes', label: 'Notes', icon: FileText },
+                          { id: 'mcqs', label: 'MCQs', icon: CheckCircle }
+                        ].map(st => (
+                          <button 
+                            key={st.id}
+                            className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border bg-gray-50 text-[#6B6B6B] border-gray-100 hover:border-[#4A3728]"
+                          >
+                            <st.icon size={10} />
+                            <span className="text-[9px] font-black uppercase">{st.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {task.status !== 'completed' && (
+                        <button onClick={() => navigate("/session", { state: { task } })} className="w-full mt-4 py-2 border border-[#4A3728] text-[#4A3728] rounded-lg text-[11px] font-bold hover:bg-[#4A3728] hover:text-white transition-all">
+                          Resume Full Session
                         </button>
-                      ))}
+                      )}
                     </div>
-
-                    {task.status !== 'completed' && (
-                      <button onClick={() => navigate("/session", { state: { task } })} className="w-full mt-4 py-2 border border-[#4A3728] text-[#4A3728] rounded-lg text-[11px] font-bold hover:bg-[#4A3728] hover:text-white transition-all">
-                        Resume Full Session
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {dailyTasks.length === 0 && (
-                  <div className="text-center py-10">
-                    <EmptyState title="No tasks scheduled" subtitle="Time to recharge or plan ahead." compact />
-                  </div>
-                )}
+                  ))}
+                  {dailyTasks.length === 0 && (
+                    <div className="text-center py-10">
+                      <EmptyState title="No tasks" subtitle="Time to recharge." compact />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </>
     </AnimatedPage>
   );
 };

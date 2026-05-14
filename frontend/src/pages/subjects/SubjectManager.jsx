@@ -109,35 +109,49 @@ const SubjectManager = () => {
   const [newUnitTitle, setNewUnitTitle] = useState("");
 
   const addUnit = async (subjectId) => {
-    if (!newUnitTitle.trim()) { toast.error("Enter unit title"); return; }
+    const title = newUnitTitle.trim();
+    if (!title) { toast.error("Enter unit title"); return; }
+    
     try {
-      const res = await subjectService.createUnit(subjectId, { title: newUnitTitle.trim() });
+      await subjectService.createUnit(subjectId, { title });
       toast.success("Unit created");
       setNewUnitTitle("");
       setShowAddUnitTo(null);
-      // Reload subjects to get updated tree
+      
+      // refresh the tree so the new unit shows up
       const updated = await subjectService.getSubjects();
       setSubjects(updated.data);
     } catch (err) {
+      console.error("unit creation failed: ", err);
       toast.error("Failed to create unit");
     }
   };
 
   const addTopicToUnit = async (unitId) => {
-    if (!newTopicName.trim()) { toast.error("Enter topic name"); return; }
+    const title = newTopicName.trim();
+    if (!title) { toast.error("Enter topic name"); return; }
+    
     try {
+      // default to 1 hour if they didn't put anything
+      const hours = newTopicHours ? parseFloat(newTopicHours) : 1;
+      
       await subjectService.addTopicToUnit(unitId, { 
-        title: newTopicName.trim(), 
-        estimatedHours: newTopicHours ? parseFloat(newTopicHours) : 1,
+        title, 
+        estimatedHours: hours,
         status: 'NOT_STARTED'
       });
+      
       toast.success("Topic added to unit");
       setNewTopicName("");
       setNewTopicHours("");
       setAddingTopicTo(null);
+      
+      // trigger a re-fetch
       const updated = await subjectService.getSubjects();
       setSubjects(updated.data);
     } catch (err) {
+      // silent log for debugging
+      console.warn("adding topic failed", err);
       toast.error("Failed to add topic");
     }
   };

@@ -12,7 +12,6 @@ import {
   BarChart3,
   RotateCcw,
   Plus,
-  Flame,
   Star,
   Printer,
   Target,
@@ -38,124 +37,137 @@ import toast from "react-hot-toast";
 
 const DIFFICULTY_HOURS = { Hard: 1.5, Medium: 1, Easy: 0.75 };
 
-function generateStudyPlan(subjects, examDateStr, hoursPerDay, userOptions = {}) {
+// Helper to build out a student's schedule roadmap based on remaining topics
+const buildStudentRoadmap = (subjects, examDateStr, hoursPerDay, userOptions = {}) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const examDate = new Date(examDateStr);
-  examDate.setHours(0, 0, 0, 0);
-  const totalDays = Math.max(1, Math.ceil((examDate - today) / 86400000));
+  
+  const targetDate = new Date(examDateStr);
+  targetDate.setHours(0, 0, 0, 0);
+  
+  const daysLeft = Math.max(1, Math.ceil((targetDate - today) / 86400000));
 
-  const allTopics = [];
+  let pendingTopics = [];
+  
+  // gather everything that isn't finished yet
   subjects.forEach((subj) => {
-    subj.topics.forEach((topic) => {
+    (subj.topics || []).forEach((topic) => {
       if (topic.done || topic.status === "COMPLETED") return;
-      const fallbackHours = DIFFICULTY_HOURS[subj.difficulty] || 1;
-      allTopics.push({
+      
+      const defaultTime = DIFFICULTY_HOURS[subj.difficulty] || 1;
+      pendingTopics.push({
         subjectName: subj.name,
         topicName: topic.name,
         difficulty: subj.difficulty || "Medium",
-        durationHours: topic.estimatedHours ? parseFloat(topic.estimatedHours) : fallbackHours,
-        priority: topic.status === "IN_PROGRESS" ? 0 : 1,
+        durationHours: topic.estimatedHours ? parseFloat(topic.estimatedHours) : defaultTime,
+        priority: topic.status === "IN_PROGRESS" ? 0 : 1, // prioritize stuff already started
       });
     });
   });
 
-  if (allTopics.length === 0) return {};
+  if (!pendingTopics.length) return {};
 
-  allTopics.sort((a, b) => {
-    // If Priority is Hard Topics First
+  // sort them based on strategy
+  pendingTopics.sort((a, b) => {
     if (userOptions?.priority === "Hard Topics First") {
-      const dw = { Hard: 0, Medium: 1, Easy: 2 };
-      if (a.difficulty !== b.difficulty) return (dw[a.difficulty] ?? 1) - (dw[b.difficulty] ?? 1);
+      const weights = { Hard: 0, Medium: 1, Easy: 2 };
+      if (a.difficulty !== b.difficulty) return (weights[a.difficulty] ?? 1) - (weights[b.difficulty] ?? 1);
     }
     
     if (a.priority !== b.priority) return a.priority - b.priority;
-    const dw = { Hard: 0, Medium: 1, Easy: 2 };
-    return (dw[a.difficulty] ?? 1) - (dw[b.difficulty] ?? 1);
+    const w = { Hard: 0, Medium: 1, Easy: 2 };
+    return (w[a.difficulty] ?? 1) - (w[b.difficulty] ?? 1);
   });
 
-  const plan = {};
-  let dayIdx = 0;
-  let dayHours = 0;
+  const generatedPlan = {};
+  let currentDayOffset = 0;
+  let hoursAccumulated = 0;
 
-  allTopics.forEach((topic) => {
-    const dateKey = format(addDays(today, dayIdx), "yyyy-MM-dd");
-    if (!plan[dateKey]) plan[dateKey] = [];
-
-    if (dayHours + topic.durationHours > hoursPerDay && plan[dateKey].length > 0) {
-      dayIdx = Math.min(dayIdx + 1, totalDays - 1);
-      dayHours = 0;
+  pendingTopics.forEach((t) => {
+    let dayStr = format(addDays(today, currentDayOffset), "yyyy-MM-dd");
+    
+    // move to next day if this topic pushes us over the limit (and we already have stuff today)
+    if (hoursAccumulated + t.durationHours > hoursPerDay && (generatedPlan[dayStr] && generatedPlan[dayStr].length > 0)) {
+      currentDayOffset = Math.min(currentDayOffset + 1, daysLeft - 1);
+      hoursAccumulated = 0;
+      dayStr = format(addDays(today, currentDayOffset), "yyyy-MM-dd");
     }
 
-    const finalDate = format(addDays(today, dayIdx), "yyyy-MM-dd");
-    if (!plan[finalDate]) plan[finalDate] = [];
+    if (!generatedPlan[dayStr]) generatedPlan[dayStr] = [];
 
-    plan[finalDate].push({
+    generatedPlan[dayStr].push({
       id: Date.now() + Math.random(),
-      subjectName: topic.subjectName,
-      topicName: topic.topicName,
-      durationHours: topic.durationHours,
-      difficulty: topic.difficulty,
+      subjectName: t.subjectName,
+      topicName: t.topicName,
+      durationHours: t.durationHours,
+      difficulty: t.difficulty,
       status: "pending",
       isBacklog: false,
     });
-    dayHours += topic.durationHours;
+    
+    hoursAccumulated += t.durationHours;
 
-    if (dayHours >= hoursPerDay) {
-      dayIdx = Math.min(dayIdx + 1, totalDays - 1);
-      dayHours = 0;
+    if (hoursAccumulated >= hoursPerDay) {
+      currentDayOffset = Math.min(currentDayOffset + 1, daysLeft - 1);
+      hoursAccumulated = 0;
     }
   });
 
-  return plan;
-}
+  return generatedPlan;
+};
 
-const Dashboard = () => {
+export default function Dashboard() {
   const { user } = useAuthStore();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  const [streak, setStreak] = useState(() => {
-    const saved = localStorage.getItem("sp_streak");
-    if (!saved) return { count: 7, lastDate: new Date().toDateString() };
-    return JSON.parse(saved);
-  });
-
-  const subjects = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
-  const totalTopicsCount = subjects.reduce((acc, s) => acc + (s.topics ? s.topics.length : 0), 0);
-  const completedTopicsCount = subjects.reduce((acc, s) => acc + (s.topics ? s.topics.filter(t => t.status === "COMPLETED" || t.done).length : 0), 0);
-  const inProgressTopicsCount = subjects.reduce((acc, s) => acc + (s.topics ? s.topics.filter(t => t.status === "IN_PROGRESS").length : 0), 0);
-  const completedTopicsPercent = totalTopicsCount > 0 ? Math.round((completedTopicsCount / totalTopicsCount) * 100) : 0;
-
+  
+  // UI States
+  const [loading, setLoading] = useState(true);
+  const [showDashboardCalendar, setShowDashboardCalendar] = useState(false);
+  const [expandedSubjects, setExpandedSubjects] = useState({});
+  
+  // Data States
+  const [data, setData] = useState(null);
   const [goals, setGoals] = useState([]);
   const [totalStudyHours, setTotalStudyHours] = useState("0.0");
-  const [showGoalModal, setShowGoalModal] = useState(false);
-  const [newGoal, setNewGoal] = useState({ title: "", targetDays: 10, subjectId: "" });
-  const [expandedSubjects, setExpandedSubjects] = useState({});
-  const [showDashboardCalendar, setShowDashboardCalendar] = useState(false);
+  const [liveSubjects, setLiveSubjects] = useState([]);
   
+  // Modal States
+  const [showGoalModal, setShowGoalModal] = useState(false);
   const [showGenModal, setShowGenModal] = useState(false);
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  
+  // Form States
+  const [newGoal, setNewGoal] = useState({ title: "", targetDays: 10, subjectId: "" });
+  const [newTask, setNewTask] = useState({ subjectName: "", topicName: "", durationHours: 1 });
+  
+  // Optimization Options
   const [genHours, setGenHours] = useState(user?.studyHoursPerDay || 4);
   const [genExamDate, setGenExamDate] = useState(user?.examDate || "");
   const [genStrategy, setGenStrategy] = useState("Balanced");
   const [genPriority, setGenPriority] = useState("Balanced Coverage");
   const [selectedGenSubjects, setSelectedGenSubjects] = useState([]);
-  
-  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
-  const [newTask, setNewTask] = useState({ subjectName: "", topicName: "", durationHours: 1 });
 
+  // Calculate local stats
+  const subjects = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
+  const totalTopicsCount = subjects.reduce((sum, s) => sum + (s.topics ? s.topics.length : 0), 0);
+  const completedTopicsCount = subjects.reduce((sum, s) => sum + (s.topics ? s.topics.filter(t => t.status === "COMPLETED" || t.done).length : 0), 0);
+  const inProgressTopicsCount = subjects.reduce((sum, s) => sum + (s.topics ? s.topics.filter(t => t.status === "IN_PROGRESS").length : 0), 0);
+  const completedTopicsPercent = totalTopicsCount > 0 ? Math.round((completedTopicsCount / totalTopicsCount) * 100) : 0;
+  
+  const activeTopic = subjects.flatMap(s => (s.topics || []).filter(t => t.status === "IN_PROGRESS").map(t => ({ ...t, subjectName: s.name })))[0];
 
   useEffect(() => {
-    const today = new Date().toDateString();
-    if (streak.lastDate !== today) {
-      const yesterday = new Date(Date.now() - 86400000).toDateString();
-      const newCount = streak.lastDate === yesterday ? streak.count + 1 : 1;
-      const updated = { count: newCount, lastDate: today };
-      setStreak(updated);
-      localStorage.setItem("sp_streak", JSON.stringify(updated));
-    }
-  }, []);
+    const fetchLiveSubjects = async () => {
+      try {
+        const { subjectService } = await import('../../services/subjectService');
+        const res = await subjectService.getSubjects();
+        if (res.success) setLiveSubjects(res.data);
+      } catch (err) { console.error("Failed to fetch subjects"); }
+    };
+    fetchLiveSubjects();
+  }, [showGenModal]);
+
+
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -238,14 +250,15 @@ const Dashboard = () => {
     }
   };
 
-  const handleGeneratePlan = async () => {
+  const executeScheduleGeneration = async () => {
     try {
       if (!genExamDate) { toast.error("Please set your exam date."); return; }
       
       const subs = JSON.parse(localStorage.getItem("sp_subjects") || "[]");
       if (subs.length === 0) { toast.error("Please add some subjects first."); return; }
 
-      const plan = generateStudyPlan(subs, genExamDate, genHours, { strategy: genStrategy, priority: genPriority });
+      // run our custom roadmap builder instead of old generic planner
+      const plan = buildStudentRoadmap(subs, genExamDate, genHours, { strategy: genStrategy, priority: genPriority });
       const totalSessions = Object.values(plan).reduce((a, d) => a + d.length, 0);
 
       if (totalSessions === 0) { toast.error("No topics found to schedule."); return; }
@@ -348,7 +361,6 @@ const Dashboard = () => {
     { label: "Topics Completed", value: `${completedTopicsPercent}%`, icon: TrendingUp, trend: `${completedTopicsCount}/${totalTopicsCount} done`, color: "text-green-500", bg: "bg-green-50" },
     { label: "In Progress", value: inProgressTopicsCount, icon: Star, trend: "Currently studying", color: "text-amber-500", bg: "bg-amber-50" },
     { label: "Study Hours", value: `${totalStudyHours}h`, icon: Clock, trend: "All-time logged", color: "text-purple-500", bg: "bg-purple-50" },
-    { label: "Daily Streak", value: `${streak.count}d`, icon: Flame, trend: "Current streak", color: "text-orange-500", bg: "bg-orange-50" },
   ];
 
   return (
@@ -383,9 +395,9 @@ const Dashboard = () => {
                 <div className="grid grid-cols-2 gap-6">
                    <div className="space-y-2">
                       <label className="text-[11px] font-black uppercase tracking-widest text-[#A3A3A3]">Subject Domain</label>
-                      <select value={newTask.subjectName} onChange={e => setNewTask(p => ({ ...p, subjectName: e.target.value }))} className="w-full p-4 rounded-xl border-[#E6E6E6] border-2 focus:border-[var(--primary)] outline-none font-bold text-[14px] bg-[#F9FAFB]">
+                      <select value={selectedGenSubjects[0] || ""} onChange={e => setSelectedGenSubjects(e.target.value ? [e.target.value] : [])} className="w-full p-4 rounded-xl border-[#E6E6E6] border-2 focus:border-[var(--primary)] outline-none font-bold text-[14px] bg-[#F9FAFB]">
                          <option value="">All Subjects</option>
-                         {subjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                         {liveSubjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
                    </div>
                    <div className="space-y-2">
@@ -418,7 +430,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className="pt-4 flex gap-4">
-                   <button onClick={handleGeneratePlan} className="btn-primary flex-1 !py-5 text-[14px] uppercase tracking-widest font-black flex items-center justify-center gap-3">
+                   <button onClick={executeScheduleGeneration} className="btn-primary flex-1 !py-5 text-[14px] uppercase tracking-widest font-black flex items-center justify-center gap-3">
                       <Zap size={18} className="text-[var(--accent-gold)]" />
                       Generate Plan
                    </button>
@@ -497,11 +509,8 @@ const Dashboard = () => {
               <span className="badge-warning">
                 <CalendarDays size={12} className="mr-1.5" /> {user?.examDate ? getDaysUntil(user.examDate) : (data?.daysToExam || "—")} days to exam
               </span>
-              <span className="badge-success">
-                <Flame size={12} className="mr-1.5" /> {streak.count} day streak
-              </span>
               <span className="badge-info">
-                <Clock size={12} className="mr-1.5" /> {user?.studyHoursPerDay || 4}h daily goal
+                <Clock size={12} className="mr-1.5" /> {user?.studyHoursPerDay ? `${user.studyHoursPerDay}h daily goal` : 'Set daily goal in settings'}
               </span>
             </div>
           </div>
@@ -521,21 +530,24 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Adaptive Alert */}
-        {missedTasks.length > 0 && (
-          <div className="mb-10 bg-[var(--primary)] text-white rounded-2xl p-8 flex items-center justify-between shadow-xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent-gold)] opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
-            <div className="flex items-center gap-6 relative z-10">
-              <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 backdrop-blur-sm">
-                <Zap size={28} className="text-[var(--accent-gold)]" />
+
+        {activeTopic && (
+          <div className="mb-10 p-6 rounded-2xl bg-[#FAF9F6] border-2 border-[#4A3728] shadow-sm flex items-center justify-between animate-fade-in">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#4A3728] flex items-center justify-center text-white shadow-lg animate-pulse">
+                <Play size={24} fill="currentColor" />
               </div>
               <div>
-                <h4 className="text-[16px] font-bold tracking-tight">Adaptive Calibration Required</h4>
-                <p className="text-[13px] text-white/70 font-medium mt-1">Detected {missedTasks.length} deviations from your protocol. Re-optimize to stay on track.</p>
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#A3A3A3]">Active Study Session</p>
+                <h2 className="text-[18px] font-black text-[#4A3728] tracking-tight">{activeTopic.topicName || activeTopic.name}</h2>
+                <p className="text-[13px] font-bold text-[#6B6B6B]">{activeTopic.subjectName}</p>
               </div>
             </div>
-            <button onClick={handleRecalibrate} className="px-8 py-3 bg-[var(--accent-gold)] text-[var(--primary)] rounded-xl text-[13px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl relative z-10">
-              Recalibrate Now
+            <button 
+              onClick={() => navigate("/session", { state: { task: activeTopic } })}
+              className="px-6 py-3 bg-[#4A3728] text-white rounded-xl font-bold text-[13px] flex items-center gap-2 hover:scale-105 transition-all shadow-md"
+            >
+              Resume Learning <ArrowRight size={18} />
             </button>
           </div>
         )}
@@ -758,6 +770,4 @@ const Dashboard = () => {
       </div>
     </AnimatedPage>
   );
-};
-
-export default Dashboard;
+}
