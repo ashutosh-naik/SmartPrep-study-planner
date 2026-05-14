@@ -49,6 +49,7 @@ public class Task {
     @Column(name = "is_revision")
     private Boolean isRevision = false;
 
+    @Builder.Default
     @Column(name = "revision_level")
     private Integer revisionLevel = 0; // 0=Study, 1=R1, 2=R2, 3=Final
 

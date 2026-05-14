@@ -29,6 +29,7 @@ public class Topic {
     @Column(name = "estimated_hours", precision = 4, scale = 1)
     private BigDecimal estimatedHours;
 
+    @Builder.Default
     @Column(name = "difficulty", length = 20)
     private String difficulty = "MEDIUM"; // EASY, MEDIUM, HARD
 
