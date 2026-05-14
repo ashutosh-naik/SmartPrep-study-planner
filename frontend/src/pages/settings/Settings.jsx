@@ -161,10 +161,10 @@ const Settings = () => {
                         <div>
                             <h4 className="text-[20px] font-bold text-[#4A3728]">{profile.name || "Student Name"}</h4>
                             <p className="text-[13px] text-[#6B6B6B] font-medium mt-1">{profile.email || "student@example.com"}</p>
-                            <div className="flex gap-2 mt-4">
-                                <span className="badge-info">{profile.course || "B.Tech"}</span>
-                                <span className="badge-info">{profile.year || "3rd Year"}</span>
-                            </div>
+                             <div className="flex gap-2 mt-4">
+                                 <span className="badge-info">{profile.course || "MCA"}</span>
+                                 <span className="badge-info">{profile.year || "2nd Year"}</span>
+                             </div>
                         </div>
                       </div>
 

@@ -64,26 +64,30 @@ const TaskTracking = () => {
     return { title: "", subjectName: "", priority: "MEDIUM", durationHours: 1, deadline: "", notes: "", scheduledDate: format(new Date(), "yyyy-MM-dd") };
   }
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await taskService.getCustomTasks("all");
-        if (res.success && res.data && res.data.length > 0) {
-          setTasks(res.data);
-        } else {
-          // Dynamic suggestions if no tasks found
-          const suggestions = [
-            { id: "s1", title: "Setup your study goal for the week", subjectName: "Planning", priority: "HIGH", durationHours: 0.5, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") },
-            { id: "s2", title: "Review last week's mock test errors", subjectName: "Data Structures", priority: "MEDIUM", durationHours: 1.5, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") },
-            { id: "s3", title: "Organize digital notes for Networking", subjectName: "Networking", priority: "LOW", durationHours: 1.0, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") }
-          ];
-          setTasks(suggestions);
-        }
-      } catch (err) { toast.error("Failed to load tasks"); }
-      finally { setLoading(false); }
-    })();
+  const fetchTasks = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await taskService.getCustomTasks("all");
+      if (res.success && res.data && res.data.length > 0) {
+        setTasks(res.data);
+      } else {
+        const suggestions = [
+          { id: "s1", title: "Setup your study goal for the week", subjectName: "Planning", priority: "HIGH", durationHours: 0.5, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") },
+          { id: "s2", title: "Review last week's mock test errors", subjectName: "Data Structures", priority: "MEDIUM", durationHours: 1.5, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") },
+          { id: "s3", title: "Organize digital notes for Networking", subjectName: "Networking", priority: "LOW", durationHours: 1.0, status: "pending", scheduledDate: format(new Date(), "yyyy-MM-dd") }
+        ];
+        setTasks(suggestions);
+      }
+    } catch (err) { 
+      toast.error("Failed to load tasks"); 
+    } finally { 
+      setLoading(false); 
+    }
   }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const overdueTasks = tasks.filter((t) => t.status !== "completed" && t.deadline && isPast(new Date(t.deadline)));
   const filteredTasks = tasks.filter((t) => {
@@ -155,15 +159,25 @@ const TaskTracking = () => {
   };
 
   const handleRecover = async () => {
-    setLoading(true);
+    setRecovering(true);
     try {
       const res = await taskService.recoverBacklogs();
       if (res.success) {
-        toast.success("Recovery roadmap generated! Check your future schedule.");
+        if (res.data && res.data.length > 0) {
+          toast.success(`Generated recovery for ${res.data.length} backlogs! Check your future schedule.`);
+        } else {
+          toast.success("No backlogs found to recover.");
+        }
         fetchTasks();
+      } else {
+        toast.error(res.message || "Failed to generate recovery roadmap");
       }
-    } catch { toast.error("Failed to generate recovery roadmap"); }
-    finally { setLoading(false); }
+    } catch (err) { 
+      const msg = err.response?.data?.message || err.message || "Connection error";
+      toast.error(`Error: ${msg}`); 
+    } finally { 
+      setRecovering(false); 
+    }
   };
 
   const handleSubtaskToggle = async (task, type, currentVal) => {
@@ -355,11 +369,11 @@ const TaskTracking = () => {
           <div className="flex items-center gap-3">
             <button 
               onClick={handleRecover} 
-              disabled={loading}
+              disabled={recovering}
               className="btn-secondary text-[13px] border-[#A3A3A3] text-[#6B6B6B] flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-600 transition-all disabled:opacity-50"
               title="Reschedule missed tasks into future slots"
             >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              <RefreshCw size={14} className={recovering ? "animate-spin" : ""} />
               Recover Backlogs
             </button>
             <button onClick={() => { setEditingTask(null); setShowModal(true); }} className="btn-secondary text-[13px] border-[#4A3728] text-[#4A3728] flex items-center gap-2 hover:bg-[#4A3728] hover:text-white transition-all">

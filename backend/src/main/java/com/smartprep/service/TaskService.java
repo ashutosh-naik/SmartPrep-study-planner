@@ -195,35 +195,56 @@ public class TaskService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
+        // Find the active study plan if it exists
         StudyPlan plan = studyPlanRepository.findTopByUserIdOrderByCreatedAtDesc(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Active study plan not found"));
+                .orElse(null);
 
-        // Identify pending or partially completed tasks from the past
-        List<Task> overdueTasks = taskRepository.findByStudyPlanId(plan.getId()).stream()
-                .filter(t -> t.getScheduledDate().isBefore(LocalDate.now()) && !"completed".equals(t.getStatus()))
+        List<Task> overdueTasks = new ArrayList<>();
+
+        // 1. Gather overdue study-plan tasks (if plan exists)
+        if (plan != null) {
+            overdueTasks.addAll(taskRepository.findByStudyPlanId(plan.getId()).stream()
+                    .filter(t -> t.getScheduledDate() != null && t.getScheduledDate().isBefore(LocalDate.now()) && !"completed".equals(t.getStatus()))
+                    .collect(Collectors.toList()));
+        }
+
+        // 2. Gather overdue custom tasks
+        List<Task> overdueCustom = taskRepository.findCustomTasksByUserId(user.getId()).stream()
+                .filter(t -> t.getScheduledDate() != null && t.getScheduledDate().isBefore(LocalDate.now()) && !"completed".equals(t.getStatus()))
                 .collect(Collectors.toList());
+        overdueTasks.addAll(overdueCustom);
 
         if (overdueTasks.isEmpty()) return new ArrayList<>();
+
+        // Sort by priority and date to ensure logical recovery
+        overdueTasks.sort((a, b) -> {
+            Map<String, Integer> pMap = Map.of("HIGH", 1, "MEDIUM", 2, "LOW", 3);
+            int pA = pMap.getOrDefault(a.getPriority(), 2);
+            int pB = pMap.getOrDefault(b.getPriority(), 2);
+            if (pA != pB) return pA - pB;
+            return a.getScheduledDate().compareTo(b.getScheduledDate());
+        });
 
         // Shift them intelligently: 3 topics max per recovery day to avoid overload
         LocalDate resumeDate = LocalDate.now().plusDays(1);
         for (int i = 0; i < overdueTasks.size(); i++) {
             Task t = overdueTasks.get(i);
             
-            // Adjust duration based on remaining work
+            // Adjust duration based on remaining work (for mission-based tasks)
             double effortRemaining = 1.0;
             if (t.getVideoCompleted()) effortRemaining -= 0.4;
             if (t.getNotesCompleted()) effortRemaining -= 0.3;
             if (t.getMcqCompleted())   effortRemaining -= 0.2;
             if (t.getPyqCompleted())   effortRemaining -= 0.1;
             
-            if (effortRemaining < 0.1) effortRemaining = 0.1; // Minimum 6 mins for any task
+            if (effortRemaining < 0.1) effortRemaining = 0.1;
             
             BigDecimal originalDuration = t.getDurationHours() != null ? t.getDurationHours() : BigDecimal.ONE;
             t.setDurationHours(originalDuration.multiply(BigDecimal.valueOf(effortRemaining)));
             
             t.setIsBacklog(true);
-            t.setOriginalDate(t.getScheduledDate());
+            t.setIsRescheduled(true); // Tag it for UI
+            if (t.getOriginalDate() == null) t.setOriginalDate(t.getScheduledDate());
             t.setScheduledDate(resumeDate.plusDays(i / 3)); 
             taskRepository.save(t);
         }

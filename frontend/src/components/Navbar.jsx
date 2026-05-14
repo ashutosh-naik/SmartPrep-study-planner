@@ -256,7 +256,7 @@ const Navbar = ({ title, subtitle }) => {
           <div className="flex items-center gap-3 pl-3 border-l border-[#E6E6E6] no-print">
             <div className="text-right hidden lg:block">
               <p className="text-[13px] font-bold text-[#4A3728]">{user?.name || "Student"}</p>
-              <p className="text-[11px] text-[#6B6B6B] font-bold uppercase tracking-wider">{user?.course || "CS Student"}</p>
+              <p className="text-[11px] text-[#6B6B6B] font-bold uppercase tracking-wider">{user?.course || "MCA 2nd Year"}</p>
             </div>
             <div onClick={() => navigate("/settings")} className="w-8 h-8 rounded-full overflow-hidden cursor-pointer bg-[#4A3728] flex items-center justify-center text-white font-bold text-[12px] transition-all duration-300 hover:scale-110">
               {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" /> : user?.name?.charAt(0) || "U"}
